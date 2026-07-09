@@ -1,0 +1,882 @@
+/* ============================================================
+   THE DEEP SEA — design tokens
+   Define values once here, then only ever use var(--name).
+   Faster alternative to the @import below: put a <link> to the
+   same Google Fonts URL in your HTML <head>.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+
+  /* --- COLOR: depth ramp (surface light → trench black) --------- */
+  --depth-1: hsl(188 58% 84%);   /* 0m    — bright waterline */
+  --depth-2: hsl(200 88% 26%);   /* 200m  — darker, closer to the real Deep Sea's water color */
+  --depth-3: hsl(225 40% 4%);    /* 500m  — black             */
+  --depth-4: hsl(225 40% 4%);    /* black */
+  --depth-5: hsl(225 40% 4%);    /* black */
+  --depth-6: hsl(225 40% 4%);    /* black (drop to 0% lightness for absolute trench-floor black) */
+
+  /* --- COLOR: hero sky (clear sky → sunset → waterline) ---------- */
+  --sky-top:    hsl(210 60% 72%);   /* soft clear sky              */
+  --sky-mid:    hsl(30 70% 75%);    /* warm peachy horizon         */
+  --sky-bottom: hsl(188 50% 80%);   /* warm teal, bridges to water */
+
+  /* --- COLOR: water surface — deliberately separate from --sky-bottom
+     so the waves/top zone can be darkened without changing the hero sky. */
+  --water-surface: hsl(199 90% 38%);
+
+  /* --- COLOR: bioluminescence accent ---------------------------- */
+  --glow:        hsl(165 92% 62%);   /* core cyan-green light       */
+  --glow-bright: hsl(168 96% 74%);   /* hottest center of the point */
+  --glow-dim:    hsl(172 60% 40%);   /* faint outer halo            */
+
+  /* --- COLOR: semantic roles (use THESE in your components) ------ */
+  --text-on-light: hsl(220 45% 11%);   /* dark ink for the bright surface */
+  --text-on-dark:  hsl(190 28% 90%);   /* cool off-white for the deep    */
+  --text-muted:    hsl(199 20% 60%);   /* captions / secondary copy      */
+  
+  /* --- TYPE: families ------------------------------------------- */
+  --font-display: "Cormorant Garamond", "Times New Roman", serif;
+  --font-body:    "Hanken Grotesk", system-ui, -apple-system, sans-serif;
+  --font-mono:    "Space Mono", ui-monospace, "Courier New", monospace;
+
+  /* --- TYPE: fluid scale, ~1.25 ratio — clamp(min, fluid, max) --- */
+  --text-sm:      clamp(0.85rem, 0.81rem + 0.20vw, 0.95rem);
+  --text-base:    clamp(1.00rem, 0.96rem + 0.25vw, 1.13rem);  /* body */
+  --text-md:      clamp(1.20rem, 1.12rem + 0.40vw, 1.45rem);
+  --text-lg:      clamp(1.45rem, 1.32rem + 0.65vw, 1.85rem);
+  --text-xl:      clamp(1.75rem, 1.52rem + 0.95vw, 2.35rem);
+  --text-2xl:     clamp(2.10rem, 1.75rem + 1.35vw, 3.00rem);
+  
+  /* --- SPACING: 8px base, expressed in rem ---------------------- */
+  --space-sm:  1.00rem;  /* 16px */
+  --space-md:  1.50rem;  /* 24px */
+  --space-lg:  2.00rem;  /* 32px */
+  
+  /* --- SHAPE ---------------------------------------------------- */
+  --radius-sm:   2px;
+  --radius-md:   6px; 
+
+  
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-body);
+}
+
+#particle-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.depth-container {
+  position: fixed;
+  left: 35vw;
+  top: 70vh;
+  /* dvh = the *actually visible* viewport height on mobile, where vh is
+     computed against the largest possible viewport (address bar hidden) —
+     without this, fixed/positioned elements can sit shifted or clipped once
+     the real mobile browser chrome is factored in. Harmless fallback: browsers
+     without dvh support just ignore this whole declaration and keep the vh
+     one above. */
+  top: 70dvh;
+  transform: translateY(-50%);
+  z-index: 10;
+  
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  width: 30vw;
+}
+
+.depth-counter {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-md);
+  color: var(--text-on-dark);
+  text-shadow: 0 0 4px hsl(190 28% 90% / 0.5), 0 0 8px hsl(190 28% 90% / 0.3);
+
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+
+}
+
+.depth-spacer {
+  flex: 1;              /* each side grows to eat the leftover space equally */
+  height: 0.5px;
+  background: var(--text-on-dark);
+  box-shadow: 0 0 4px hsl(190 28% 90% / 0.5), 0 0 8px hsl(190 28% 90% / 0.3);
+}
+
+/* ---- ZONE NAV ---- */
+
+.zone-nav {
+  position: fixed;
+  right: max(18px, 2.5vw);
+  top: 50vh;                 /* vertically centered; JS keeps yPercent: -50 */
+  top: 50dvh;                /* dvh fallback — see .depth-container */
+  z-index: 10;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+
+  opacity: 0;                /* faded in on scroll, mirroring the depth meter */
+}
+
+.zone-nav-dot {
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 1.5px solid var(--text-on-dark);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  box-shadow: 0 0 4px hsl(190 28% 90% / 0.3);
+  transition: background 0.4s ease, transform 0.3s ease, box-shadow 0.4s ease;
+}
+
+.zone-nav-dot:hover {
+  transform: scale(1.2);
+}
+
+.zone-nav-dot.active {
+  background: var(--text-on-dark);
+  transform: scale(1.25);
+  box-shadow: 0 0 6px hsl(190 28% 90% / 0.6), 0 0 12px hsl(190 28% 90% / 0.4);
+}
+
+/* ---- AUTO SCROLL ---- */
+/* Persistent floating control, mirrored (bottom-left) against the zone-nav's
+   right-side placement. Toggles a slow, hands-free tour of the whole page. */
+
+.auto-scroll-btn {
+  position: fixed;
+  left: max(18px, 2.5vw);
+  bottom: max(18px, 2.5vh);
+  bottom: max(18px, 2.5dvh);  /* dvh fallback — see .depth-container */
+  z-index: 10;
+
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1.5px solid var(--text-on-dark);
+  border-radius: 50%;
+  background: hsl(220 45% 11% / 0.25);
+  cursor: pointer;
+  box-shadow: 0 0 4px hsl(190 28% 90% / 0.3);
+  transition: background 0.4s ease, transform 0.3s ease, box-shadow 0.4s ease, opacity 0.4s ease;
+}
+
+.auto-scroll-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 6px hsl(190 28% 90% / 0.6), 0 0 12px hsl(190 28% 90% / 0.4);
+}
+
+/* Tooltip label — reads straight off the button's own aria-label via
+   attr(), so it automatically switches between "Start"/"Stop auto-scroll"
+   with the JS toggle, no separate element or JS wiring needed. */
+.auto-scroll-btn::after {
+  content: attr(aria-label);
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-6px);
+  white-space: nowrap;
+
+  padding: 0.45rem 0.85rem;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--text-on-dark);
+  background: hsl(220 45% 11% / 0.6);
+  border: 1px solid hsl(0 0% 100% / 0.2);
+  border-radius: 8px;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+
+  /* Briefly self-reveal once on page load (nobody hovers an icon-only button
+     without a reason to), then settle into pure hover/focus behavior. */
+  animation: auto-scroll-hint 5s ease-in-out 1.5s 1;
+}
+
+.auto-scroll-btn:hover::after,
+.auto-scroll-btn:focus-visible::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+@keyframes auto-scroll-hint {
+  0%, 100% { opacity: 0; transform: translateY(-50%) translateX(-6px); }
+  15%, 65% { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+
+.auto-scroll-icon {
+  position: relative;
+  width: 16px;
+  height: 16px;
+}
+
+/* Play triangle, drawn with a border trick (no icon font/svg needed) */
+.auto-scroll-play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 13px solid var(--text-on-dark);
+  transform: translateX(1px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Pause bars, hidden until the button is toggled on */
+.auto-scroll-pause {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.auto-scroll-pause::before,
+.auto-scroll-pause::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--text-on-dark);
+  border-radius: 1px;
+}
+
+.auto-scroll-pause::before { left: 1px; }
+.auto-scroll-pause::after  { right: 1px; }
+
+.auto-scroll-btn[aria-pressed="true"] .auto-scroll-play {
+  opacity: 0;
+  transform: translateX(1px) scale(0.6);
+}
+
+.auto-scroll-btn[aria-pressed="true"] .auto-scroll-pause {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.zone-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  width: 40vw;
+  margin: 0 auto;
+  display: flex; 
+  
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--text-on-dark);
+
+  position: absolute;
+  top: 0;               /* the seam = the top edge of this zone */
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);  /* pull up by half its height → center lands on the seam */
+  z-index: 2;            /* above .ocean-grid (z-index: 1), so creatures don't cover it */
+}
+
+.zones-container {
+
+  margin: 0;
+  padding: 0;
+  position: relative;
+
+}
+
+/* Overlays the full scroll height of .zones-container (whose height is set
+   by the 5 .zone sections' min-heights). Mirrors neal.fun's ".ocean" grid:
+   8 columns, 50px rows, one row per 3m of depth — see creatures.js. */
+.ocean-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+  /* It comes before the .zone sections in the DOM, and both are positioned
+     with no explicit z-index, so without this the later .zone backgrounds
+     would paint on top and hide every creature. */
+  z-index: 1;
+
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-auto-rows: 50px;
+}
+
+.creature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  height: 100%;
+  /* Grid items default to min-width/min-height: auto, which uses the
+     image's intrinsic size as a floor and ignores max-width — letting a
+     single creature force its column wider than the grid track and
+     overflow the page. This lets the image actually shrink to fit. */
+  min-width: 0;
+  min-height: 0;
+}
+
+.creature img {
+  display: block;
+  filter: drop-shadow(0 4px 10px hsl(225 40% 4% / 0.4));
+}
+
+.creature-photo {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+.creature-name {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: var(--text-sm);
+  color: var(--text-on-dark);
+  text-shadow: 0 0 4px hsl(190 28% 90% / 0.5), 0 0 8px hsl(190 28% 90% / 0.3);
+  white-space: nowrap;
+}
+
+.zone {
+  position: relative;
+  /* Same fudge-factor overlap .hero-container already uses against the first
+     zone (margin-bottom: -1px there). Adjacent zones sit at a mathematically
+     exact 0px gap, but two separately-painted gradient boxes that only touch
+     edge-to-edge can still show a hairline compositor/anti-aliasing seam on
+     some (especially mobile) GPUs — a 1px overlap absorbs that without any
+     visible effect on the gradient itself. */
+  margin-top: -1px;
+}
+
+.zone-text-container {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--text-on-dark);
+  text-shadow: 0 0 4px hsl(190 28% 90% / 0.5), 0 0 8px hsl(190 28% 90% / 0.3);
+  margin: 30vh 0 0 0;
+  margin-top: 30dvh;     /* dvh fallback — see .depth-container */
+  z-index: 2;            /* above .ocean-grid (z-index: 1), so creatures don't cover it */
+
+  /* Transparent layout wrapper now — the glass moved onto the text itself
+     (below), so each line hugs its words instead of one big padded box. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+/* The frosted background hugs the text: title + description are their own
+   glass pills. Compound selector on the border so it outranks .glass-card's
+   border regardless of source order (zone text stays borderless). */
+.zone-title.glass-card,
+.zone-description.glass-card {
+  border: none;
+  border-radius: 12px;
+  padding: 0.4rem 1.1rem;
+}
+
+.zone-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  margin: 0;
+}
+
+.zone-description {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+}
+
+.hero-container {
+  position: relative;
+  margin: 0;
+  margin-bottom: -1px;
+  padding: 0;
+
+  height: 100vh;
+  height: 100dvh;   /* dvh fallback — see .depth-container */
+  background: linear-gradient(
+    to bottom,
+    var(--sky-top)    0%,
+    var(--sky-mid)    65%,
+    var(--sky-bottom) 100%
+  );
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.hero-text-scroll-wrapper {
+  text-align: center;
+  z-index: 10;
+}
+
+/* Reusable frosted-glass material (Apple "liquid glass" look). Only the
+   material — no layout, no text color — so it can sit on both the light hero
+   and the dark zones, each keeping its own text color. The diagonal sheen
+   (brighter top-left → clearer middle) fakes light refracting across a pane;
+   that, not the blur, is what reads as glass over a smooth background
+   (blurring a gradient shows nothing). */
+.glass-card {
+  background: linear-gradient(
+    135deg,
+    hsl(0 0% 100% / 0.34) 0%,
+    hsl(0 0% 100% / 0.16) 55%,
+    hsl(0 0% 100% / 0.24) 100%
+  );
+  border: 1px solid hsl(0 0% 100% / 0.28);
+  border-radius: 16px;
+  /* The blur is what keeps text legible over busy animals — keep it; it's the
+     bright fill/border/sheen that made it shout, so those are dialed way down
+     so the panel recedes but still reads as a distinct pane. */
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+  backdrop-filter: blur(16px) saturate(130%);
+  box-shadow:
+    0 4px 18px hsl(220 45% 11% / 0.12),      /* soft drop shadow */
+    inset 0 1px 0 hsl(0 0% 100% / 0.3);      /* faint top sheen  */
+}
+
+/* Credit tag, top-right of the hero. Absolutely positioned inside the hero so
+   it scrolls away naturally with it (the footer carries the fuller "go check
+   them out" credit). Dark text, since it sits on the pale hero sky. */
+.hero-credit-card {
+  position: absolute;
+  top: max(18px, 2.5vh);
+  top: max(18px, 2.5dvh);  /* dvh fallback — see .depth-container */
+  right: max(18px, 2.5vw);
+  z-index: 20;
+  max-width: 15rem;
+
+  padding: 0.7rem 1rem;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--text-on-light);
+}
+
+.hero-credit-link {
+  color: var(--text-on-light);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid hsl(220 45% 11% / 0.35);
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+.hero-credit-link:hover {
+  color: hsl(190 70% 32%);
+  border-bottom-color: hsl(190 70% 32%);
+}
+
+.hero-subtitle {
+  display: inline-block;
+  will-change: transform;
+  font-family: var(--font-body);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  color: var(--text-on-light);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.hero-title {
+  display: inline-block;
+  will-change: transform;
+  font-family: var(--font-display);
+  font-size: clamp(5rem, 4rem + 6vw, 12rem);
+  font-weight: 500;
+  line-height: 0.9;
+  letter-spacing: 0.02em;
+  
+  /* Give the text an oceanic gradient */
+  background: linear-gradient(160deg, hsl(220 45% 11%) 30%, hsl(190 70% 35%) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+
+  /* Use drop-shadow filter instead of text-shadow for clipped text */
+  filter: drop-shadow(0 4px 12px hsl(220 45% 11% / 0.15)) drop-shadow(0 2px 4px hsl(220 45% 11% / 0.2));
+}
+
+/* ---- CLOUDS ---- */
+
+.clouds {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.cloud {
+  position: absolute;
+  background: hsl(0 0% 100% / 0.85);
+  border-radius: 50%;
+  filter: blur(8px);
+}
+
+.cloud-1 {
+  width: 120px;
+  height: 40px;
+  top: 12%;
+  left: 10%;
+  opacity: 0.8;
+  box-shadow:
+    30px -10px 0 10px hsl(0 0% 100% / 0.6),
+    60px 5px 0 15px hsl(0 0% 100% / 0.5),
+    100px -5px 0 8px hsl(0 0% 100% / 0.45);
+  animation: cloud-drift 50s linear infinite;
+}
+
+.cloud-2 {
+  width: 160px;
+  height: 50px;
+  top: 8%;
+  left: 55%;
+  opacity: 0.7;
+  box-shadow:
+    40px -12px 0 14px hsl(0 0% 100% / 0.55),
+    80px 4px 0 18px hsl(0 0% 100% / 0.45),
+    130px -8px 0 10px hsl(0 0% 100% / 0.4);
+  animation: cloud-drift 65s linear infinite;
+}
+
+.cloud-3 {
+  width: 90px;
+  height: 30px;
+  top: 22%;
+  left: 75%;
+  opacity: 0.65;
+  box-shadow:
+    25px -8px 0 8px hsl(0 0% 100% / 0.5),
+    55px 3px 0 12px hsl(0 0% 100% / 0.4);
+  animation: cloud-drift 45s linear infinite;
+}
+
+.cloud-4 {
+  width: 140px;
+  height: 45px;
+  top: 15%;
+  left: -10%;
+  opacity: 0.6;
+  box-shadow:
+    35px -10px 0 12px hsl(0 0% 100% / 0.5),
+    70px 6px 0 16px hsl(0 0% 100% / 0.4),
+    110px -4px 0 9px hsl(0 0% 100% / 0.35);
+  animation: cloud-drift 55s linear infinite;
+  animation-delay: -20s;
+}
+
+@keyframes cloud-drift {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(100vw); }
+}
+
+/* ---- SUN ---- */
+
+.ocean-o {
+  position: relative;
+  display: inline-block;
+  z-index: 1;
+  
+  /* Apply the same gradient directly to the O so it doesn't lose it due to the stacking context */
+  background: linear-gradient(160deg, hsl(220 45% 11%) 30%, hsl(190 70% 35%) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sun {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    hsl(45 100% 92%) 0%,
+    hsl(38 90% 72%) 40%,
+    hsl(28 85% 58%) 100%
+  );
+  box-shadow:
+    0 0 0.2em 0.1em hsl(40 90% 70% / 0.7),
+    0 0 0.6em 0.25em hsl(33 80% 60% / 0.5),
+    0 0 1.2em 0.5em hsl(28 70% 55% / 0.3),
+    0 0 2em 1em hsl(28 70% 55% / 0.15);
+  filter: blur(4px);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ---- WAVES ---- */
+
+
+
+.hero-waves {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+}
+
+
+
+.wave {
+  position: absolute;
+  /* Extends past the visible bottom edge (into the area .hero-waves' own
+     overflow:hidden already clips) so the wave's solid fill — which
+     preserveAspectRatio="none" stretches to exactly fill this box — has a
+     hidden reservoir below it. The wave-* keyframes bob each layer up to
+     ~4px via translateY; without this buffer, that upward shift drags the
+     wave's own bottom edge up with it, briefly exposing whatever's layered
+     underneath (a different-colored wave, or the sky) right at the seam
+     with #sunlight below.  */
+  bottom: -20px;
+  left: -5%;
+  width: 110%;
+  height: calc(100% + 20px);
+}
+
+.wave-back path {
+  fill: hsl(199 70% 30%);
+}
+
+.wave-mid path {
+  fill: hsl(199 75% 34%);
+}
+
+.wave-front path {
+  fill: var(--water-surface);
+}
+
+.wave-back  { animation: wave-back  7s ease-in-out infinite; }
+.wave-mid   { animation: wave-mid   5s ease-in-out infinite; }
+.wave-front { animation: wave-front 6s ease-in-out infinite; }
+
+@keyframes wave-back {
+  0%   { transform: translateX(-15px) translateY(0); }
+  25%  { transform: translateX(10px)  translateY(-3px); }
+  50%  { transform: translateX(15px)  translateY(0); }
+  75%  { transform: translateX(-5px)  translateY(2px); }
+  100% { transform: translateX(-15px) translateY(0); }
+}
+
+@keyframes wave-mid {
+  0%   { transform: translateX(12px)  translateY(0); }
+  25%  { transform: translateX(-8px)  translateY(-4px); }
+  50%  { transform: translateX(-12px) translateY(0); }
+  75%  { transform: translateX(5px)   translateY(3px); }
+  100% { transform: translateX(12px)  translateY(0); }
+}
+
+@keyframes wave-front {
+  0%   { transform: translateX(-10px) translateY(0); }
+  25%  { transform: translateX(8px)   translateY(-2px); }
+  50%  { transform: translateX(10px)  translateY(0); }
+  75%  { transform: translateX(-6px)  translateY(2px); }
+  100% { transform: translateX(-10px) translateY(0); }
+}
+
+/* ---- BUOY ---- */
+
+.buoy {
+  position: absolute;
+  bottom: 100px;
+  left: 65%;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: buoy-bob 3s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+
+.buoy-light {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: hsl(15 90% 55%);
+  box-shadow:
+    0 0 6px 2px hsl(15 90% 55% / 0.8),
+    0 0 18px 6px hsl(25 85% 50% / 0.5),
+    0 0 40px 12px hsl(30 80% 50% / 0.2);
+  animation: buoy-glow 2s ease-in-out infinite alternate;
+}
+
+.buoy-pole {
+  width: 2px;
+  height: 18px;
+  background: hsl(0 0% 30%);
+}
+
+.buoy-body {
+  width: 16px;
+  height: 12px;
+  background: hsl(0 70% 45%);
+  border-radius: 2px 2px 4px 4px;
+  border-top: 2px solid hsl(0 0% 90%);
+}
+
+@keyframes buoy-bob {
+  0%, 100% { transform: translateY(0) rotate(-2deg); }
+  50%      { transform: translateY(-8px) rotate(2deg); }
+}
+
+@keyframes buoy-glow {
+  0%   { box-shadow: 0 0 6px 2px hsl(15 90% 55% / 0.8), 0 0 18px 6px hsl(25 85% 50% / 0.5), 0 0 40px 12px hsl(30 80% 50% / 0.2); }
+  100% { box-shadow: 0 0 8px 3px hsl(15 90% 60% / 0.9), 0 0 24px 8px hsl(25 85% 55% / 0.6), 0 0 50px 16px hsl(30 80% 55% / 0.3); }
+}
+
+#sunlight {
+  background: linear-gradient(to bottom, var(--water-surface), var(--depth-2));
+}   /* 200m  */
+
+#twilight { 
+  background: linear-gradient(to bottom, var(--depth-2), var(--depth-3));
+}   /* 800m  ×4  */
+
+#midnight { 
+  background: linear-gradient(to bottom, var(--depth-3), var(--depth-4));
+}   /* 3000m ×15 */
+
+#abyssal  { 
+  background: linear-gradient(to bottom, var(--depth-4), var(--depth-5));
+}   /* 2000m ×10 */
+
+#hadal    {
+  background: linear-gradient(to bottom, var(--depth-5), var(--depth-6));
+}   /* 5000m ×25 */
+
+/* ---- FOOTER ---- */
+
+.site-footer {
+  height: 100vh;
+  height: 100dvh;   /* dvh fallback — see .depth-container */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--depth-6);
+}
+
+.site-footer-content {
+  text-align: center;
+  color: var(--text-on-dark);
+}
+
+.site-footer-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.site-footer-text {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  color: var(--text-muted);
+}
+
+.back-to-top {
+  margin-top: var(--space-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  letter-spacing: 0.05em;
+  color: var(--text-on-dark);
+
+  background: transparent;
+  border: 1.5px solid var(--text-on-dark);
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 0 6px hsl(190 28% 90% / 0.2);
+  transition: background 0.35s ease, color 0.35s ease, box-shadow 0.35s ease;
+}
+
+.back-to-top:hover {
+  background: var(--text-on-dark);
+  color: var(--depth-6);
+  box-shadow: 0 0 10px hsl(190 28% 90% / 0.5), 0 0 20px hsl(190 28% 90% / 0.3);
+}
+
+.back-to-top-arrow {
+  display: inline-block;
+  font-size: 1.2em;
+  line-height: 1;
+  animation: back-to-top-bob 2s ease-in-out infinite;
+}
+
+@keyframes back-to-top-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+.site-footer-credit {
+  margin-top: var(--space-lg);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.site-footer-link {
+  color: var(--text-on-dark);
+  text-decoration: none;
+  border-bottom: 1px solid hsl(190 28% 90% / 0.4);
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+.site-footer-link:hover {
+  color: var(--glow-bright);
+  border-bottom-color: var(--glow-bright);
+}

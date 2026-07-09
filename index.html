@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/lenis@1.3.23/dist/lenis.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="depth-container">
+        <span class="depth-spacer"></span>
+        <span class="depth-counter"></span>
+        <span class="depth-spacer"></span>
+    </div>
+
+    <nav class="zone-nav" aria-label="Zone navigation">
+        <button class="zone-nav-dot" data-target="sunlight" aria-label="Go to Sunlight Zone"></button>
+        <button class="zone-nav-dot" data-target="twilight" aria-label="Go to Twilight Zone"></button>
+        <button class="zone-nav-dot" data-target="midnight" aria-label="Go to Midnight Zone"></button>
+        <button class="zone-nav-dot" data-target="abyssal" aria-label="Go to Abyssal Zone"></button>
+        <button class="zone-nav-dot" data-target="hadal" aria-label="Go to Hadal Zone"></button>
+    </nav>
+
+    <button class="auto-scroll-btn" aria-label="Start auto-scroll" aria-pressed="false">
+        <span class="auto-scroll-icon">
+            <span class="auto-scroll-play"></span>
+            <span class="auto-scroll-pause"></span>
+        </span>
+    </button>
+
+    <canvas id="particle-canvas"></canvas>
+
+    <main>
+        <div class="hero-container">
+            <div class="hero-credit-card glass-card">
+                A recreation of
+                <a class="hero-credit-link" href="https://neal.fun/deep-sea/" target="_blank" rel="noopener noreferrer">The Deep Sea</a>
+                by
+                <a class="hero-credit-link" href="https://neal.fun/" target="_blank" rel="noopener noreferrer">neal.fun</a>
+            </div>
+
+            <div class="hero-text-scroll-wrapper">
+                <span class="hero-subtitle">Lets explore the </span><br>
+                <span class="hero-title"><span class="ocean-o">O<span class="sun"></span></span>cean</span>
+            </div>
+
+            <div class="clouds">
+                <div class="cloud cloud-1"></div>
+                <div class="cloud cloud-2"></div>
+                <div class="cloud cloud-3"></div>
+                <div class="cloud cloud-4"></div>
+            </div>
+
+
+
+            <div class="hero-waves">
+                <svg class="wave wave-back" viewBox="0 0 1440 180" preserveAspectRatio="none">
+                    <path d="M0,90 Q180,50 360,90 Q540,130 720,90 Q900,50 1080,90 Q1260,130 1440,90 L1440,180 L0,180 Z"/>
+                </svg>
+
+                <svg class="wave wave-mid" viewBox="0 0 1440 180" preserveAspectRatio="none">
+                    <path d="M0,100 Q180,70 360,100 Q540,130 720,100 Q900,70 1080,100 Q1260,130 1440,100 L1440,180 L0,180 Z"/>
+                </svg>
+
+                <div class="buoy">
+                    <div class="buoy-light"></div>
+                    <div class="buoy-pole"></div>
+                    <div class="buoy-body"></div>
+                </div>
+
+                <svg class="wave wave-front" viewBox="0 0 1440 180" preserveAspectRatio="none">
+                    <path d="M0,110 Q180,85 360,110 Q540,135 720,110 Q900,85 1080,110 Q1260,135 1440,110 L1440,180 L0,180 Z"/>
+                </svg>
+            </div>
+        </div>
+       
+        <div class="zones-container">
+            <div class="ocean-grid"></div>
+
+            <section class="zone" id="sunlight">
+                
+                <div class="zone-text-container">
+                    <h1 class="zone-title glass-card">Sunlight Zone</h1>
+                    <span class="zone-description glass-card">0m - 200m</span>
+                </div>
+
+        
+            </section>
+        
+            <section class="zone" id="twilight">
+                <div class="zone-divider">
+                    <span> 200 m</span>
+                    <span class="depth-spacer"></span>
+                </div>
+
+                <div class="zone-text-container">
+                
+                    <h2 class="zone-title glass-card">Twilight Zone</h2>
+                    <span class="zone-description glass-card">200m - 1000m</span>
+                </div>  
+        
+            </section>
+        
+            <section class="zone" id="midnight">
+                <div class="zone-divider">
+                    <span> 1000 m</span>
+                    <span class="depth-spacer"></span>
+                </div>
+                <div class="zone-text-container">
+                    <h2 class="zone-title glass-card">Midnight Zone</h2>
+                    <span class="zone-description glass-card">1000m - 4000m</span>
+                </div>
+            </section>
+            
+            <section class="zone" id="abyssal">
+                <div class="zone-divider">
+                    <span> 4000 m</span>
+                    <span class="depth-spacer"></span>
+                </div>
+                <div class="zone-text-container">
+                    <h2 class="zone-title glass-card">Abyssal Zone</h2>
+                    <span class="zone-description glass-card">4000m - 6000m</span>
+                </div>
+            </section>
+        
+            <section class="zone" id="hadal">
+                <div class="zone-divider">
+                    <span> 5000 m</span>
+                    <span class="depth-spacer"></span>
+                </div>
+                <div class="zone-text-container">
+                    <h2 class="zone-title glass-card">Hadal Zone</h2>
+                    <span class="zone-description glass-card">6000m - 11000m</span>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="site-footer-content">
+            <h2 class="site-footer-title">You've reached the bottom.</h2>
+            <p class="site-footer-text">Thanks for exploring the ocean.</p>
+            <button class="back-to-top" aria-label="Scroll back to the surface">
+                <span class="back-to-top-arrow" aria-hidden="true">&uarr;</span>
+                Back to the surface
+            </button>
+            <p class="site-footer-credit">
+                A remake of <a class="site-footer-link" href="https://neal.fun/deep-sea/" target="_blank" rel="noopener noreferrer">The Deep Sea</a> by Neal Agarwal.<br>
+                Go check out the original and the rest of <a class="site-footer-link" href="https://neal.fun/" target="_blank" rel="noopener noreferrer">neal.fun</a>.
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/lenis@1.3.23/dist/lenis.min.js"></script>
+    <script src="script.js"></script>
+    <script src="particles.js"></script>
+    <script src="creatures.js"></script>
+</body>
+</html>
