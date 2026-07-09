@@ -437,5 +437,49 @@ function updateWavePaths() {
   });
 }
 
-updateWavePaths();
-window.addEventListener("resize", updateWavePaths);
+// The buoy's `bottom` was a fixed 100px, which only happened to line up with
+// the wave-front's crest at the screen width the wave was originally designed
+// at — since the wave's shape now varies with screen width (see above), a
+// fixed offset can't stay correct everywhere (e.g. it ends up floating well
+// above the water on narrow phones). Instead, find the wave-front path's
+// actual Y position directly under the buoy and anchor to that, so it always
+// sits right at (very slightly behind) the water surface regardless of
+// screen size.
+const BUOY_SUBMERSION_PX = 17; // how far the buoy's bottom sits behind/below the wave-front crest
+
+function updateBuoyPosition() {
+  const buoy = document.querySelector(".buoy");
+  const wavesEl = document.querySelector(".hero-waves");
+  const waveFrontSvg = document.querySelector(".wave-front");
+  const path = waveFrontSvg && waveFrontSvg.querySelector("path");
+  if (!buoy || !wavesEl || !path) return;
+
+  const wavesRect = wavesEl.getBoundingClientRect();
+  const buoyRect = buoy.getBoundingClientRect(); // only its x-center is used below
+  const buoyCenterX = buoyRect.left + buoyRect.width / 2;
+
+  const svgRect = waveFrontSvg.getBoundingClientRect();
+  const viewBox = waveFrontSvg.viewBox.baseVal;
+  const buoyXInSvg = (buoyCenterX - svgRect.left) / svgRect.width * viewBox.width;
+
+  const pathLength = path.getTotalLength();
+  let lo = 0, hi = pathLength, y = 0;
+  for (let i = 0; i < 25; i++) {
+    const mid = (lo + hi) / 2;
+    const pt = path.getPointAtLength(mid);
+    if (pt.x < buoyXInSvg) lo = mid; else hi = mid;
+    y = pt.y;
+  }
+
+  const waveSurfaceYOnScreen = svgRect.top + (y / viewBox.height) * svgRect.height;
+  const bottomPx = wavesRect.bottom - waveSurfaceYOnScreen - BUOY_SUBMERSION_PX;
+  buoy.style.bottom = `${Math.round(bottomPx)}px`;
+}
+
+function updateHeroWaterline() {
+  updateWavePaths();
+  updateBuoyPosition();
+}
+
+updateHeroWaterline();
+window.addEventListener("resize", updateHeroWaterline);
