@@ -19,7 +19,7 @@
     "name": "Staghorn Coral",
     "slug": "staghorn-coral",
     "depth": 12,
-    "col": 6,
+    "col": 7,
     "colWidth": 2,
     "rowHeight": 1
   },
@@ -27,7 +27,7 @@
     "name": "Striped Bass",
     "slug": "striped-bass",
     "depth": 12,
-    "col": 2,
+    "col": 1,
     "colWidth": 2,
     "rowHeight": 1
   },
@@ -139,7 +139,7 @@
     "name": "Barnacle",
     "slug": "barnacle",
     "depth": 80,
-    "col": 6,
+    "col": 7,
     "colWidth": 2,
     "rowHeight": 1
   },
@@ -242,7 +242,7 @@
   {
     "name": "Thick-Billed Murre Dive",
     "slug": "thick-billed-murre",
-    "depth": 210,
+    "depth": 198,
     "col": 3,
     "colWidth": 2,
     "rowHeight": 2
