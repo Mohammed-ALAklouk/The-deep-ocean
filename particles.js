@@ -1,6 +1,91 @@
 // ---- BIOLUMINESCENT PARTICLE SYSTEM ----
 // Depends on `totalHeight`, defined in script.js (loaded before this file).
 
+class Particle {
+  constructor({ x, y, radius, depth, opacity, vx, vy, hue, saturation, startAge = 0 }) {
+    this.x = x;
+    this.y = y;
+    this.baseRadius = radius;
+    this.depth = depth;
+    this.opacity = opacity;
+    this.vx = vx;
+    this.vy = vy;
+    this.hue = hue;
+    this.saturation = saturation;
+    this.age = startAge;
+
+    // For pulsing effect
+    this.phase = Math.random() * Math.PI * 2;
+    this.pulseSpeed = 0.008 + Math.random() * 0.02;
+
+    // For aging and lifecycle management
+    this.maxAge = 400 + Math.random() * 400; // lifespan in frames
+  }
+
+  static createRandom(x, y, startAge = 0) {
+    return new Particle({
+      x: x,
+      y: y,
+      radius: 0.4 + Math.random() * 1.2,
+      depth: 0.5 + Math.random() * 1.0,
+      opacity: 0.3 + Math.random() * 0.5,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      hue: 160 + Math.random() * 20,
+      saturation: 70 + Math.random() * 25,
+      startAge: startAge,
+    });
+  }
+
+  update(scrollDelta = 0) {
+    this.x += this.vx;
+    this.y += this.vy - scrollDelta * this.depth;
+    this.vx += (Math.random() - 0.5) * 0.015;
+    this.vy += (Math.random() - 0.5) * 0.015;
+    this.vx *= 0.998;
+    this.vy *= 0.998;
+    this.phase += this.pulseSpeed;
+    this.age++;
+  }
+
+  shouldDie(minX, minY, maxX, maxY) {
+    return (
+      this.x < minX || this.x > maxX ||
+      this.y < minY || this.y > maxY ||
+      this.age >= this.maxAge
+    );
+  }
+
+  getAlpha() {
+    const pulse = 0.6 + 0.4 * Math.sin(this.phase);
+    const fadeIn = Math.min(this.age / 60, 1);
+    const remaining = this.maxAge - this.age;
+    const fadeOut = Math.min(remaining / 90, 1);
+    return this.opacity * fadeIn * fadeOut * pulse;
+
+  }
+
+  getGlowSize() {
+    return this.baseRadius * (0.8 + 0.4 * Math.sin(this.phase)) * 3;
+  }
+
+  render(ctx) {
+    const alpha = this.getAlpha();
+    const glowSize = this.getGlowSize();
+
+    const grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, glowSize);
+    grad.addColorStop(0, `hsla(${this.hue}, ${this.saturation}%, 72%, ${alpha})`);
+    grad.addColorStop(0.3, `hsla(${this.hue}, ${this.saturation - 10}%, 55%, ${alpha * 0.4})`);
+    grad.addColorStop(1, `hsla(${this.hue}, ${this.saturation - 20}%, 40%, 0)`);
+
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, glowSize, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
+
+}
+
 const canvas = document.getElementById('particle-canvas');
 const ctx = canvas.getContext('2d');
 
@@ -46,27 +131,17 @@ function getTargetCount() {
 }
 
 function spawnParticle(startAge = 0) {
-  particles.push({
-    x: -BUFFER + Math.random() * (canvas.width + BUFFER * 2),
-    y: -BUFFER + Math.random() * (canvas.height + BUFFER * 2),
-    baseRadius: 0.4 + Math.random() * 1.2,
-    depth: 0.5 + Math.random() * 1.0,
-    opacity: 0.3 + Math.random() * 0.5,
-    vx: (Math.random() - 0.5) * 0.4,
-    vy: (Math.random() - 0.5) * 0.4,
-    hue: 160 + Math.random() * 20,
-    saturation: 70 + Math.random() * 25,
-    phase: Math.random() * Math.PI * 2,
-    pulseSpeed: 0.008 + Math.random() * 0.02,
-    age: startAge,
-    maxAge: 400 + Math.random() * 400,
-  });
+  particles.push(Particle.createRandom(
+    -BUFFER + Math.random() * (canvas.width + BUFFER * 2),
+    -BUFFER + Math.random() * (canvas.height + BUFFER * 2),
+    startAge
+  ));
 }
 
 const BUFFER = 300;   // spawn zone around viewport
 const KILL = BUFFER + 50;  // particles die past the buffer
 
-function renderParticles() {
+function updateAndRenderParticles() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.globalCompositeOperation = 'lighter';
 
@@ -84,53 +159,17 @@ function renderParticles() {
 
   // update, draw, and cull
   particles = particles.filter((p) => {
-    // scroll pushes particles — depth controls parallax speed
-    p.y -= scrollDelta * p.depth;
-
-    // ambient drift
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vx += (Math.random() - 0.5) * 0.015;
-    p.vy += (Math.random() - 0.5) * 0.015;
-    p.vx *= 0.998;
-    p.vy *= 0.998;
-    p.age++;
-
-    // die if outside viewport + buffer, or too old
-    if (p.x < -KILL || p.x > canvas.width + KILL ||
-        p.y < -KILL || p.y > canvas.height + KILL) {
+    p.update(scrollDelta);
+    if (p.shouldDie(-KILL, -KILL, canvas.width + KILL, canvas.height + KILL)) {
       return false;
     }
-    if (p.age >= p.maxAge) return false;
-
-    // pulse
-    p.phase += p.pulseSpeed;
-    const pulse = 0.6 + 0.4 * Math.sin(p.phase);
-
-    // fade in (first 60 frames) and fade out (last 90 frames)
-    const fadeIn = Math.min(p.age / 60, 1);
-    const remaining = p.maxAge - p.age;
-    const fadeOut = Math.min(remaining / 90, 1);
-
-    const r = p.baseRadius * (0.8 + 0.4 * Math.sin(p.phase));
-    const alpha = p.opacity * pulse * fadeIn * fadeOut;
-    const glowSize = r * 3;
-
-    const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowSize);
-    grad.addColorStop(0, `hsla(${p.hue}, ${p.saturation}%, 72%, ${alpha})`);
-    grad.addColorStop(0.3, `hsla(${p.hue}, ${p.saturation - 10}%, 55%, ${alpha * 0.4})`);
-    grad.addColorStop(1, `hsla(${p.hue}, ${p.saturation - 20}%, 40%, 0)`);
-
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, glowSize, 0, Math.PI * 2);
-    ctx.fillStyle = grad;
-    ctx.fill();
-
+    
+    p.render(ctx);
     return true;
   });
 
   ctx.globalCompositeOperation = 'source-over';
-  requestAnimationFrame(renderParticles);
+  requestAnimationFrame(updateAndRenderParticles);
 }
 
-requestAnimationFrame(renderParticles);
+requestAnimationFrame(updateAndRenderParticles);
