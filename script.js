@@ -13,7 +13,14 @@ let hadal_zone_height = totalHeight - 6000;
 const px_per_metter = 50 / 3;
 
 gsap.registerPlugin(ScrollTrigger);
-const lenis = new Lenis();
+// syncTouch drives touch scrolling through Lenis's own RAF loop instead of
+// leaving it to the browser's native (compositor-thread) scroll. The zone text
+// is "frozen" by a JS counter-transform applied on scroll (see the manual pin
+// below); with native touch scroll that transform lags the page a frame at a
+// time and the text visibly jitters on mobile. Routing touch through Lenis puts
+// the scroll and the counter-transform on the same clock, as they already are
+// for wheel scrolling on desktop.
+const lenis = new Lenis({ syncTouch: true });
 
 lenis.on('scroll', ScrollTrigger.update);
 let scrollDiv = document.querySelector('.depth-counter');
