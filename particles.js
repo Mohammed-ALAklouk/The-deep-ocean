@@ -1,7 +1,6 @@
 // ---- BIOLUMINESCENT PARTICLE SYSTEM ----
-// Depends on `totalHeight`, defined in script.js (loaded before this file).
 
-class Particle {
+export class Particle {
   constructor({ x, y, radius, depth, opacity, vx, vy, hue, saturation, startAge = 0 }) {
     this.x = x;
     this.y = y;
@@ -86,90 +85,85 @@ class Particle {
 
 }
 
-const canvas = document.getElementById('particle-canvas');
-const ctx = canvas.getContext('2d');
-
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
-let particles = [];
-let lastScrollY = window.scrollY;
-
-function getCurrentDepth() {
-  const vh = window.innerHeight;
-  const container = document.querySelector('.zones-container');
-  const containerHeight = container.scrollHeight;
-  const scrollRange = containerHeight - vh;
-  if (scrollRange <= 0) return 0;
-
-  const distFromTop = window.scrollY + vh * 0.5;
-  return Math.max(0, distFromTop * totalHeight / containerHeight);
-}
-
-function getTargetCount() {
-  const depth = getCurrentDepth();
-
-  if (depth < 200 || depth > 8000) return 0;
-
-  // ramp up from 200m to 500m
-  const rampUp = Math.min((depth - 200) / 300, 1);
-
-  // Start fading out smoothly from 5000m all the way down to 8000m
-  let fadeOut = 1;
-  if (depth > 5000) {
-      // Use an exponential curve so it tapers off very gently rather than hitting a wall
-      const progress = Math.max((8000 - depth) / 3000, 0);
-      fadeOut = Math.pow(progress, 1.5);
+export class ParticleSystem {
+  // BUFFER: spawn zone around viewport
+  // KILL: particles die past the buffer
+  constructor(canvas, totalHeight, BUFFER = 300, KILL = BUFFER + 50) {
+    this.particles = [];
+    this.lastScrollY = window.scrollY;
+    this.BUFFER = BUFFER;
+    this.KILL = KILL;
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
+    this.totalHeight = totalHeight;
   }
 
-  // Increased max particles from 200 to 300 so it's impossible to miss
-  return Math.round(300 * rampUp * fadeOut);
-}
+  getCurrentDepth() {
+    const vh = window.innerHeight;
+    const container = document.querySelector('.zones-container');
+    const containerHeight = container.scrollHeight;
+    const scrollRange = containerHeight - vh;
+    if (scrollRange <= 0) return 0;
 
-function spawnParticle(startAge = 0) {
-  particles.push(Particle.createRandom(
-    -BUFFER + Math.random() * (canvas.width + BUFFER * 2),
-    -BUFFER + Math.random() * (canvas.height + BUFFER * 2),
-    startAge
-  ));
-}
-
-const BUFFER = 300;   // spawn zone around viewport
-const KILL = BUFFER + 50;  // particles die past the buffer
-
-function updateAndRenderParticles() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.globalCompositeOperation = 'lighter';
-
-  // scroll delta — particles move opposite to scroll direction
-  const currentScrollY = window.scrollY;
-  const scrollDelta = currentScrollY - lastScrollY;
-  lastScrollY = currentScrollY;
-
-  // spawn the full deficit immediately — particles start pre-aged so they're already visible
-  const target = getTargetCount();
-  const deficit = target - particles.length;
-  for (let i = 0; i < deficit; i++) {
-    spawnParticle(60 + Math.random() * 140); // age 60–200: already past fade-in
+    const distFromTop = window.scrollY + vh * 0.5;
+    return Math.max(0, distFromTop * this.totalHeight / containerHeight);
   }
 
-  // update, draw, and cull
-  particles = particles.filter((p) => {
-    p.update(scrollDelta);
-    if (p.shouldDie(-KILL, -KILL, canvas.width + KILL, canvas.height + KILL)) {
-      return false;
+  getTargetCount() {
+    const depth = this.getCurrentDepth();
+
+    if (depth < 200 || depth > 8000) return 0;
+
+    // ramp up from 200m to 500m
+    const rampUp = Math.min((depth - 200) / 300, 1);
+
+    // Start fading out smoothly from 5000m all the way down to 8000m
+    let fadeOut = 1;
+    if (depth > 5000) {
+        // Use an exponential curve so it tapers off very gently rather than hitting a wall
+        const progress = Math.max((8000 - depth) / 3000, 0);
+        fadeOut = Math.pow(progress, 1.5);
     }
-    
-    p.render(ctx);
-    return true;
-  });
 
-  ctx.globalCompositeOperation = 'source-over';
-  requestAnimationFrame(updateAndRenderParticles);
+    // Increased max particles from 200 to 300 so it's impossible to miss
+    return Math.round(300 * rampUp * fadeOut);
+  }
+
+  spawnParticle(startAge = 0) {
+    this.particles.push(Particle.createRandom(
+      -this.BUFFER + Math.random() * (this.canvas.width + this.BUFFER * 2),
+      -this.BUFFER + Math.random() * (this.canvas.height + this.BUFFER * 2),
+      startAge
+    ));
+  }
+  
+  updateAndRender() {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.globalCompositeOperation = 'lighter';
+
+    // scroll delta — particles move opposite to scroll direction
+    const currentScrollY = window.scrollY;
+    const scrollDelta = currentScrollY - this.lastScrollY;
+    this.lastScrollY = currentScrollY;
+
+    // spawn the full deficit immediately — particles start pre-aged so they're already visible
+    const target = this.getTargetCount();
+    const deficit = target - this.particles.length;
+    for (let i = 0; i < deficit; i++) {
+      this.spawnParticle(60 + Math.random() * 140); // age 60–200: already past fade-in
+    }
+
+    // update, draw, and cull
+    this.particles = this.particles.filter((p) => {
+      p.update(scrollDelta);
+      if (p.shouldDie(-this.KILL, -this.KILL, this.canvas.width + this.KILL, this.canvas.height + this.KILL)) {
+        return false;
+      }
+      
+      p.render(this.ctx);
+      return true;
+    });
+
+    this.ctx.globalCompositeOperation = 'source-over';
+  }
 }
-
-requestAnimationFrame(updateAndRenderParticles);

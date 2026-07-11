@@ -1,3 +1,4 @@
+import { ParticleSystem } from './particles.js';
 let totalHeight = 10924; // matches neal.fun's Deep Sea (Challenger Deep) max depth
 
 let sunlight_zone_height = 200;
@@ -490,3 +491,23 @@ function updateHeroWaterline() {
 
 updateHeroWaterline();
 window.addEventListener("resize", updateHeroWaterline);
+
+const canvas = document.getElementById('particle-canvas');
+const BUFFER = 300;   // spawn zone around viewport
+const KILL = BUFFER + 50;  // particles die past the buffer
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const particleSystem = new ParticleSystem(canvas, totalHeight, BUFFER, KILL);
+
+function start() {
+  const loop = () => { particleSystem.updateAndRender(); requestAnimationFrame(loop); };
+  loop();
+}
+
+start();
