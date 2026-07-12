@@ -492,6 +492,8 @@ function updateHeroWaterline() {
 updateHeroWaterline();
 window.addEventListener("resize", updateHeroWaterline);
 
+// ---- PARTICLES ----
+
 const canvas = document.getElementById('particle-canvas');
 const BUFFER = 300;   // spawn zone around viewport
 const KILL = BUFFER + 50;  // particles die past the buffer
