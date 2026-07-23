@@ -24,8 +24,16 @@ fetch('creatures.json')
       el.style.gridColumn = `${col} / span ${colWidth}`;
       el.style.gridRow = `${row} / span ${rowHeight}`;
 
+
+      const imgPath = `creatures/images/${slug}.png`;
+
       const img = document.createElement('img');
-      img.src = `creatures/images/${slug}.png`;
+      // The grid cell (.creature) already reserves space via gridColumn/gridRow,
+      // so lazy-loading can't cause layout shift here — no per-image dimensions
+      // needed. Just defer offscreen images until they're near the viewport.
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.src = imgPath;
       img.className = 'creature-photo';
       img.alt = name;
       img.onerror = () => { el.style.display = 'none'; };
