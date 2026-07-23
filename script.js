@@ -29,6 +29,12 @@ const lenis = new Lenis({
   smoothTouch: !reducedMotion,   // native touch scrolling when reduced
   lerp: reducedMotion ? 1 : 0.1, // 1 = no interpolation
 });
+// script.js is a module, so `lenis` is scoped to this file and invisible to
+// creatures.js (a classic script). The Lenis library itself squats on
+// `window.lenis` with an unrelated {version, touch} stub, which silently
+// shadowed this instance and broke creatures.js's `lenis.resize()` call.
+// Exposing the real instance here fixes that.
+window.lenis = lenis;
 
 lenis.on('scroll', ScrollTrigger.update);
 let scrollDiv = document.querySelector('.depth-counter');
