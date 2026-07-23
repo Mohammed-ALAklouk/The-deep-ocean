@@ -1,0 +1,22 @@
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="hsl(168 96% 74%)"/>
+      <stop offset="45%" stop-color="hsl(165 92% 62%)"/>
+      <stop offset="100%" stop-color="hsl(165 92% 62%)" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="32" height="32" rx="7" fill="hsl(225 40% 4%)"/>
+
+  <!-- angler body -->
+  <path d="M8 19.5c0-4.6 4-8.2 9-8.2 4 0 7.4 2.3 8.6 5.6.3.8-.1 1.7-.9 2l-.6.2c.5.5.8 1.1.8 1.9 0 1.6-1.5 2.9-3.4 2.9-1.4 0-2.6-.7-3.1-1.7-1.7.9-3.7 1.4-5.8 1.4-2.6 0-4.6-2-4.6-3.1z" fill="hsl(200 30% 14%)"/>
+  <circle cx="12.3" cy="18.6" r="1" fill="hsl(190 28% 90%)"/>
+
+  <!-- esca stalk -->
+  <path d="M15 11.4c0-2.6.9-4.6 2-4.6" stroke="hsl(200 30% 14%)" stroke-width="1" fill="none" stroke-linecap="round"/>
+
+  <!-- glowing lure -->
+  <circle cx="17" cy="6.6" r="4.2" fill="url(#glow)"/>
+  <circle cx="17" cy="6.6" r="1.15" fill="hsl(168 96% 74%)"/>
+</svg>
