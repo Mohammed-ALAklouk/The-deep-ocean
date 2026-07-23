@@ -1,6 +1,8 @@
 import { ParticleSystem } from './particles.js';
 let totalHeight = 10924; // matches neal.fun's Deep Sea (Challenger Deep) max depth
 
+let reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 let sunlight_zone_height = 200;
 let twilight_zone_height = 800;
 let midnight_zone_height = 3000;
@@ -21,7 +23,12 @@ gsap.registerPlugin(ScrollTrigger);
 // time and the text visibly jitters on mobile. Routing touch through Lenis puts
 // the scroll and the counter-transform on the same clock, as they already are
 // for wheel scrolling on desktop.
-const lenis = new Lenis({ syncTouch: true });
+const lenis = new Lenis({
+  smoothWheel: !reducedMotion,   // native wheel scrolling when reduced
+  syncTouch: true, // touch scroll through Lenis's RAF loop instead of native
+  smoothTouch: !reducedMotion,   // native touch scrolling when reduced
+  lerp: reducedMotion ? 1 : 0.1, // 1 = no interpolation
+});
 
 lenis.on('scroll', ScrollTrigger.update);
 let scrollDiv = document.querySelector('.depth-counter');
@@ -118,8 +125,11 @@ const navZones = navDots.map((dot) => document.getElementById(dot.dataset.target
 gsap.set(zoneNav, { yPercent: -50 });
 
 // Fade + slide into place, scrubbed to scroll, on the same trigger as the meter.
+// if user prefers reduced motion, skip the slide and just fade in.
+let zoneNavFrom = { opacity: 0 };
+if (!reducedMotion) zoneNavFrom.x = 40;
 gsap.fromTo(zoneNav,
-  { opacity: 0, x: 40 },
+  zoneNavFrom,
   {
     opacity: 1,
     x: 0,
@@ -173,9 +183,13 @@ ScrollTrigger.create({
 gsap.utils.toArray(".zone-text-container").forEach((textEl) => {
   const parentZone = textEl.closest(".zone");
 
+  let entranceFrom = { opacity: 0, y: 30, filter: "blur(6px)" };
+  if (reducedMotion) {
+    entranceFrom = { opacity: 0, filter: "blur(6px)" };
+  }
   // 1. Entrance: fades in as zone scrolls up into view (original animation)
   gsap.fromTo(textEl,
-    { opacity: 0, y: 30, filter: "blur(6px)" },
+    entranceFrom,
     {
       opacity: 1,
       y: 0,
@@ -226,12 +240,14 @@ gsap.utils.toArray(".zone-text-container").forEach((textEl) => {
   );
 });
 
+let dividerFrom = { x: "-100%" };
+if (reducedMotion) {
+  dividerFrom = { x: "0%" };
+}
 gsap.utils.toArray(".zone-divider").forEach((dividerEl) => {
   const parentZone = dividerEl.closest(".zone");
   gsap.fromTo(dividerEl,
-    {
-      x: "-100%",
-    },
+    dividerFrom,
     {
       duration: 2,
       x: "0%",
@@ -252,28 +268,34 @@ const heroSubtitle = document.querySelector('.hero-subtitle');
 const heroTitle = document.querySelector('.hero-title');
 
 // Hide initially to prevent flash before animation
-gsap.set([heroSubtitle, heroTitle], { opacity: 0, y: 50 });
+let initial = { opacity: 0, y: 50 };
+if (reducedMotion) {
+  initial = { opacity: 1, y: 0 };
+}
+gsap.set([heroSubtitle, heroTitle], initial);
 
-const heroTl = gsap.timeline();
 
-// Entrance animation
-heroTl.fromTo(heroSubtitle, 
-  { opacity: 0, y: 30 },
-  { opacity: 1, y: 0, duration: 2, ease: "power2.out", delay: 0.2 }
-)
-.fromTo(heroTitle,
-  { opacity: 0, y: 60, scale: 0.95 },
-  { opacity: 1, y: 0, scale: 1, duration: 2.5, ease: "power3.out" },
-  "-=1.5"
-)
-// Idle float kicks in perfectly synced, slightly overlapping the entrance so it doesn't feel late
-.to([heroSubtitle, heroTitle], {
-  y: 25,
-  duration: 4,
-  repeat: -1,
-  yoyo: true,
-  ease: "sine.inOut"
-}, "-=0.5");
+if (!reducedMotion) {
+  const heroTl = gsap.timeline();
+  // Entrance animation
+  heroTl.fromTo(heroSubtitle, 
+    { opacity: 0, y: 30 },
+    { opacity: 1, y: 0, duration: 2, ease: "power2.out", delay: 0.2 }
+  )
+  .fromTo(heroTitle,
+    { opacity: 0, y: 60, scale: 0.95 },
+    { opacity: 1, y: 0, scale: 1, duration: 2.5, ease: "power3.out" },
+    "-=1.5"
+  )
+  // Idle float kicks in perfectly synced, slightly overlapping the entrance so it doesn't feel late
+  .to([heroSubtitle, heroTitle], {
+    y: 25,
+    duration: 4,
+    repeat: -1,
+    yoyo: true,
+    ease: "sine.inOut"
+  }, "-=0.5");
+}
 
 // Hero exit animation on scroll — fades and drifts up but doesn't fully disappear
 const heroScrollWrapper = document.querySelector('.hero-text-scroll-wrapper');
@@ -508,7 +530,10 @@ window.addEventListener('resize', resizeCanvas);
 const particleSystem = new ParticleSystem(canvas, totalHeight, BUFFER, KILL);
 
 function start() {
-  const loop = () => { particleSystem.updateAndRender(); requestAnimationFrame(loop); };
+  const loop = () => { 
+    particleSystem.updateAndRender(reducedMotion);
+    requestAnimationFrame(loop);
+  };
   loop();
 }
 

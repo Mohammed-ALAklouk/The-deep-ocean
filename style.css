@@ -880,3 +880,13 @@ body {
   color: var(--glow-bright);
   border-bottom-color: var(--glow-bright);
 }
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .auto-scroll-btn,
+  .zone-nav-dot,
+  .back-to-top-arrow {
+    animation: none !important;
+    transition: none !important;
+  }
+}

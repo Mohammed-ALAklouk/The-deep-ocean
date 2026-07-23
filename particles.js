@@ -109,10 +109,10 @@ export class ParticleSystem {
     return Math.max(0, distFromTop * this.totalHeight / containerHeight);
   }
 
-  getTargetCount() {
+  getTargetCount(reducedMotion = false) {
     const depth = this.getCurrentDepth();
 
-    if (depth < 200 || depth > 8000) return 0;
+    if (depth < 200 || depth > 8000 || reducedMotion) return 0;
 
     // ramp up from 200m to 500m
     const rampUp = Math.min((depth - 200) / 300, 1);
@@ -137,7 +137,7 @@ export class ParticleSystem {
     ));
   }
   
-  updateAndRender() {
+  updateAndRender(reducedMotion = false) {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.globalCompositeOperation = 'lighter';
 
@@ -147,7 +147,7 @@ export class ParticleSystem {
     this.lastScrollY = currentScrollY;
 
     // spawn the full deficit immediately — particles start pre-aged so they're already visible
-    const target = this.getTargetCount();
+    const target = this.getTargetCount(reducedMotion);
     const deficit = target - this.particles.length;
     for (let i = 0; i < deficit; i++) {
       this.spawnParticle(60 + Math.random() * 140); // age 60–200: already past fade-in
