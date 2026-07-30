@@ -111,17 +111,20 @@ export class ParticleSystem {
 
   getTargetCount(reducedMotion = false) {
     const depth = this.getCurrentDepth();
+    const maxDepth = 8000;
+    const minDepth = 5;
+    const taperDepth = 5000; // Depth at which we start tapering off the particle count
 
-    if (depth < 5 || depth > 8000 || reducedMotion) return 0;
+    if (depth < minDepth || depth > maxDepth || reducedMotion) return 0;
 
     // ramp up from 0m to 500m
-    const rampUp = Math.min((depth - 5) / 300, 1);
+    const rampUp = Math.min((depth - minDepth) / 300, 1);
 
     // Start fading out smoothly from 5000m all the way down to 8000m
     let fadeOut = 1;
-    if (depth > 5000) {
+    if (depth > taperDepth) {
         // Use an exponential curve so it tapers off very gently rather than hitting a wall
-        const progress = Math.max((8000 - depth) / 3000, 0);
+        const progress = Math.max((maxDepth - depth) / (maxDepth - taperDepth), 0);
         fadeOut = Math.pow(progress, 1.5);
     }
 

@@ -82,8 +82,8 @@ fetch('creatures.json')
           immediateRender: false,
           scrollTrigger: {
             trigger: el,
-            start: "bottom top",
-            end: "bottom top-=300",
+            start: "top top+=200",
+            end: "bottom top",
             scrub: true,
           }
         }
