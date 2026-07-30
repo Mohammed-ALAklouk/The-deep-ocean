@@ -349,7 +349,34 @@ body {
      overflow the page. This lets the image actually shrink to fit. */
   min-width: 0;
   min-height: 0;
+
+  /* No `filter` here on purpose — this is the sharp, settled state, and the absence
+     of the property is the point. `filter: blur(0px)` would NOT be equivalent: a
+     zero-radius blur still creates a stacking context and a containing block and
+     keeps the element on the filtered compositing path, so leaving 128 of them
+     parked at blur(0px) costs something for nothing.
+     There is deliberately no `transition` either. See the [data-blur] steps below. */
 }
+
+/* Blur is scrubbed to scroll position — it ramps as the creature rises into view,
+   which is the whole look — but only ever takes these seven values instead of a new
+   radius on every frame. That distinction is the entire performance story: each
+   distinct radius is a fresh convolution over a full-size creature PNG that already
+   carries its own drop-shadow, so a continuous scrub meant ~60 re-rasters per
+   crossing where this means 7.
+   The step number IS the radius in px, so creatures.js can map progress straight
+   onto it. No transition between steps, and that's not an oversight — transitioning
+   would interpolate through the in-between radii and put the per-frame re-raster
+   straight back. The steps are invisible in practice because a blur ramp is soft by
+   nature and the opacity fade is running underneath it.
+   Levers if this is still too heavy: fewer steps (drop the odd ones), or move the
+   filter onto .creature img so the text label stays out of the re-raster. */
+.creature[data-blur="1"] { filter: blur(1px); }
+.creature[data-blur="2"] { filter: blur(2px); }
+.creature[data-blur="3"] { filter: blur(3px); }
+.creature[data-blur="4"] { filter: blur(4px); }
+.creature[data-blur="5"] { filter: blur(5px); }
+.creature[data-blur="6"] { filter: blur(6px); }
 
 .creature img {
   display: block;
@@ -534,8 +561,18 @@ body {
   background-clip: text;
   color: transparent;
 
-  /* Use drop-shadow filter instead of text-shadow for clipped text */
-  filter: drop-shadow(0 4px 12px hsl(220 45% 11% / 0.15)) drop-shadow(0 2px 4px hsl(220 45% 11% / 0.2));
+  /* No `filter` here, deliberately. This used to carry two stacked drop-shadows
+     (text-shadow does nothing on background-clip: text, so drop-shadow was the only
+     way to get one), but `filter` makes an element a filter root: every descendant
+     rasterizes together with it and none of them can be composited independently.
+     GSAP floats this element forever via an infinite yoyo on `y`, so that whole
+     combined raster — ~700px of gradient-clipped text at the clamp ceiling, plus
+     .sun nested inside it — was being redone every frame. Without the filter it's a
+     plain transform-animated layer (it already has will-change: transform), so it
+     rasterizes once and the compositor just translates it.
+     If you want the depth back, put the shadow on an unfiltered pseudo-element
+     behind the text rather than reinstating a filter on this element — a filter
+     here also puts .sun back on the per-frame path. */
 }
 
 /* ---- CLOUDS ---- */
@@ -629,6 +666,20 @@ body {
   background-clip: text;
 }
 
+/* A 0.5em disc whose glow is four stacked box-shadows, softened by blur(4px) and
+   composited with mix-blend-mode: screen. `screen` is what sells it — it lightens
+   against the sky gradient behind rather than sitting on top of it, which is the
+   difference between a sun and a pasted-on circle. A plain alpha radial-gradient
+   was tried here and is measurably cheaper, but it reads flat by comparison, so
+   this stays.
+   It isn't free: `screen` forces the compositor to read back the backdrop, so this
+   element can't be promoted and cached on its own, and .hero-title floats forever
+   above it. What made that genuinely expensive was the drop-shadow filter that used
+   to sit on .hero-title — with .sun inside that filter root, the whole ~850px
+   painted region was re-blurred and re-blended every frame. That filter is gone
+   now (see .hero-title), which is what makes this affordable. Don't reintroduce a
+   filter on any ancestor of this element. */
+
 .sun {
   position: absolute;
   top: 50%;
@@ -683,6 +734,16 @@ body {
   left: -5%;
   width: 110%;
   height: calc(100% + 20px);
+
+  /* Forces each wave onto its own compositor layer. Without it Chromium declined to
+     promote them: the three waves fully overlap each other (each is 1392x300, so all
+     three together paint 1.36x the viewport inside a 280px strip) and .buoy animates
+     in between wave-mid and wave-front in DOM order. Overlapping animated siblings
+     are exactly the case where promotion gets abandoned, and the fallback is
+     repainting on the main thread every frame — which for an SVG means
+     re-tessellating the Bezier path, not blitting a cached bitmap. Measured on a
+     144Hz display: ~40-50fps without this, a locked 144 with it. */
+  will-change: transform;
 }
 
 .wave-back path {
@@ -737,17 +798,26 @@ body {
   align-items: center;
   animation: buoy-bob 3s ease-in-out infinite;
   transform-origin: bottom center;
+  /* Same reason as .wave — it sits between two of them in DOM order and overlaps
+     both, so leaving it unpromoted drags the waves back onto the main thread. */
+  will-change: transform;
 }
 
+/* The shadows are static now and the pulse rides on opacity + scale. They used to
+   be keyframed directly (see buoy-glow below), and box-shadow is a paint property —
+   it can't be composited, so every frame of a 2s infinite alternate re-painted this
+   element and its ~50px shadow bleed, forever, for the whole time the hero was on
+   screen. The values below are the old animation's bright end; the keyframes fade
+   and shrink slightly *from* it rather than growing the radii toward it. */
 .buoy-light {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: hsl(15 90% 55%);
   box-shadow:
-    0 0 6px 2px hsl(15 90% 55% / 0.8),
-    0 0 18px 6px hsl(25 85% 50% / 0.5),
-    0 0 40px 12px hsl(30 80% 50% / 0.2);
+    0 0 8px 3px hsl(15 90% 60% / 0.9),
+    0 0 24px 8px hsl(25 85% 55% / 0.6),
+    0 0 50px 16px hsl(30 80% 55% / 0.3);
   animation: buoy-glow 2s ease-in-out infinite alternate;
 }
 
@@ -770,9 +840,13 @@ body {
   50%      { transform: translateY(-8px) rotate(2deg); }
 }
 
+/* opacity and scale are both compositor-only, so this pulse costs one raster total
+   instead of one per frame. Scale stands in for the radius growth the box-shadow
+   version animated — it shrinks the whole glow together rather than just the halo,
+   which reads near enough at 8px. */
 @keyframes buoy-glow {
-  0%   { box-shadow: 0 0 6px 2px hsl(15 90% 55% / 0.8), 0 0 18px 6px hsl(25 85% 50% / 0.5), 0 0 40px 12px hsl(30 80% 50% / 0.2); }
-  100% { box-shadow: 0 0 8px 3px hsl(15 90% 60% / 0.9), 0 0 24px 8px hsl(25 85% 55% / 0.6), 0 0 50px 16px hsl(30 80% 55% / 0.3); }
+  0%   { opacity: 0.78; transform: scale(0.92); }
+  100% { opacity: 1;    transform: scale(1); }
 }
 
 #sunlight {

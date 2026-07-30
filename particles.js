@@ -96,14 +96,32 @@ export class ParticleSystem {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.totalHeight = totalHeight;
+
+    this.container = document.querySelector('.zones-container');
+    this.containerHeight = 0;   // resolved lazily; see getCurrentDepth
+  }
+
+  // The container's height only changes on resize (and once, when creatures.js
+  // finishes inserting 128 creatures), so call this from those two places rather
+  // than re-reading it continuously.
+  invalidateLayout() {
+    this.containerHeight = 0;
   }
 
   getCurrentDepth() {
     const vh = window.innerHeight;
-    const container = document.querySelector('.zones-container');
-    const containerHeight = container.scrollHeight;
-    const scrollRange = containerHeight - vh;
-    if (scrollRange <= 0) return 0;
+    if (!this.container) return 0;
+
+    // scrollHeight was previously read on every single frame, from inside the rAF
+    // loop, together with a fresh document.querySelector. Reading scrollHeight
+    // forces the browser to flush pending layout synchronously — so with GSAP and
+    // Lenis writing to the DOM each frame, this was a forced reflow per frame for a
+    // number that almost never changes.
+    if (!this.containerHeight) {
+      this.containerHeight = this.container.scrollHeight;
+    }
+    const containerHeight = this.containerHeight;
+    if (containerHeight - vh <= 0) return 0;
 
     const distFromTop = window.scrollY + vh * 0.5;
     return Math.max(0, distFromTop * this.totalHeight / containerHeight);
@@ -141,16 +159,24 @@ export class ParticleSystem {
   }
   
   updateAndRender(reducedMotion = false) {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.ctx.globalCompositeOperation = 'lighter';
-
     // scroll delta — particles move opposite to scroll direction
     const currentScrollY = window.scrollY;
     const scrollDelta = currentScrollY - this.lastScrollY;
     this.lastScrollY = currentScrollY;
 
-    // spawn the full deficit immediately — particles start pre-aged so they're already visible
     const target = this.getTargetCount(reducedMotion);
+
+    // Nothing to draw and nothing left on screen: return before touching the
+    // canvas at all. clearRect used to run unconditionally, and any draw call marks
+    // the canvas dirty — so a full-viewport composite was being paid every frame
+    // for zero particles, above 5m, below 8000m, and for the entire session under
+    // prefers-reduced-motion (where getTargetCount always returns 0).
+    if (target === 0 && this.particles.length === 0) return;
+
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.globalCompositeOperation = 'lighter';
+
+    // spawn the full deficit immediately — particles start pre-aged so they're already visible
     const deficit = target - this.particles.length;
     for (let i = 0; i < deficit; i++) {
       this.spawnParticle(60 + Math.random() * 140); // age 60–200: already past fade-in

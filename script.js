@@ -189,9 +189,14 @@ ScrollTrigger.create({
 gsap.utils.toArray(".zone-text-container").forEach((textEl) => {
   const parentZone = textEl.closest(".zone");
 
-  let entranceFrom = { opacity: 0, y: 30, filter: "blur(6px)" };
+  // Blur is deliberately not scrubbed here either — same reasoning as the
+  // creatures in creatures.js, but this case was worse per element: .zone-title and
+  // .zone-description are .glass-cards, so each one carries a backdrop-filter. A
+  // `filter` on their container makes it a backdrop root, and re-rasterizing it on
+  // every scroll frame drags the children's 16px backdrop blur along with it.
+  let entranceFrom = { opacity: 0, y: 30 };
   if (reducedMotion) {
-    entranceFrom = { opacity: 0, filter: "blur(6px)" };
+    entranceFrom = { opacity: 0 };
   }
   // 1. Entrance: fades in as zone scrolls up into view (original animation)
   gsap.fromTo(textEl,
@@ -199,7 +204,6 @@ gsap.utils.toArray(".zone-text-container").forEach((textEl) => {
     {
       opacity: 1,
       y: 0,
-      filter: "blur(0px)",
       scrollTrigger: {
         trigger: parentZone,
         start: "top bottom",
@@ -231,10 +235,9 @@ gsap.utils.toArray(".zone-text-container").forEach((textEl) => {
   // The manual pin above stops at `top-=800px`. As the user keeps scrolling, the text now drifts up natively.
   // We fade it out during this drift over 500px.
   gsap.fromTo(textEl,
-    { opacity: 1, filter: "blur(0px)" },
+    { opacity: 1 },
     {
       opacity: 0,
-      filter: "blur(6px)",
       immediateRender: false,
       scrollTrigger: {
         trigger: parentZone,
@@ -284,7 +287,7 @@ gsap.set([heroSubtitle, heroTitle], initial);
 if (!reducedMotion) {
   const heroTl = gsap.timeline();
   // Entrance animation
-  heroTl.fromTo(heroSubtitle, 
+  heroTl.fromTo(heroSubtitle,
     { opacity: 0, y: 30 },
     { opacity: 1, y: 0, duration: 2, ease: "power2.out", delay: 0.2 }
   )
@@ -301,6 +304,17 @@ if (!reducedMotion) {
     yoyo: true,
     ease: "sine.inOut"
   }, "-=0.5");
+
+  // The float repeats forever, which meant it kept writing transforms — and kept
+  // the compositor working on the hero's layers — for the entire descent, long
+  // after the hero was thousands of pixels off screen. Nothing above the fold is
+  // worth paying for at 10,000m.
+  ScrollTrigger.create({
+    trigger: ".hero-container",
+    start: "bottom top",       // hero's bottom edge passes the top of the viewport
+    onEnter: () => heroTl.pause(),
+    onLeaveBack: () => heroTl.resume(),
+  });
 }
 
 // Hero exit animation on scroll — fades and drifts up but doesn't fully disappear
@@ -462,6 +476,14 @@ function updateWavePaths() {
   const width = wavesEl.clientWidth * 1.1;
   const height = wavesEl.clientHeight + 20;
 
+  // Bail rather than write a zero measurement. .hero-waves reports clientWidth 0
+  // both before layout resolves on load and any time it's display:none, and writing
+  // that produced viewBox="0 0 0 300" — which the SVG spec treats as "disable
+  // rendering" — plus a collapsed path with every x at 0. It only ever repaired
+  // itself on the next window resize. The ResizeObserver at the bottom of this
+  // section re-runs this the moment the element has a real size.
+  if (width <= 0 || height <= 20) return;
+
   waveConfigs.forEach(({ selector, baseYFraction, heightFraction }) => {
     const svg = document.querySelector(selector);
     const path = svg && svg.querySelector("path");
@@ -520,27 +542,102 @@ function updateHeroWaterline() {
 updateHeroWaterline();
 window.addEventListener("resize", updateHeroWaterline);
 
+// Watching the element itself rather than relying on the window resize above:
+// it fires as soon as .hero-waves actually has a size, which covers the load-time
+// case where the call above measured 0 and bailed, and it also recovers if the
+// element is hidden and shown again.
+const heroWavesEl = document.querySelector(".hero-waves");
+if (heroWavesEl) new ResizeObserver(updateHeroWaterline).observe(heroWavesEl);
+
 // ---- PARTICLES ----
 
 const canvas = document.getElementById('particle-canvas');
 const BUFFER = 300;   // spawn zone around viewport
 const KILL = BUFFER + 50;  // particles die past the buffer
 
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+// Commenting the <canvas> out of the HTML is a normal thing to do while chasing a
+// paint problem, and it used to take the whole module down with it: getElementById
+// returns null, resizeCanvas() throws on canvas.width, and every statement after
+// this point silently stops running. The particle system is decoration, so its
+// absence is treated as a valid state rather than an error.
+if (canvas) {
+  const resizeCanvas = () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  };
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
 
-const particleSystem = new ParticleSystem(canvas, totalHeight, BUFFER, KILL);
+  const particleSystem = new ParticleSystem(canvas, totalHeight, BUFFER, KILL);
 
-function start() {
-  const loop = () => { 
+  // The system caches .zones-container's scrollHeight instead of reading it every
+  // frame, so it needs telling when that height changes. ScrollTrigger.refresh is
+  // exactly that signal and covers both cases: resize, and creatures.js calling
+  // refresh() after inserting all 128 creatures (which is what sets the real page
+  // height in the first place).
+  ScrollTrigger.addEventListener("refresh", () => particleSystem.invalidateLayout());
+
+  const loop = () => {
     particleSystem.updateAndRender(reducedMotion);
     requestAnimationFrame(loop);
   };
   loop();
 }
 
-start();
+// ---- FRAME RATE LOGGING ----
+// Prints one line per second, always on. To silence it without deleting anything,
+// use the console's level filter (these go out at "info"), or gate the
+// requestAnimationFrame call at the bottom behind a URL check like
+// `if (location.search.includes("perf"))`.
+//
+// What this measures, and what it doesn't: counting requestAnimationFrame
+// callbacks measures how often the *main thread* manages to produce a frame, and
+// it's capped by the display's refresh rate — a 60Hz screen reads 60 at best, a
+// 144Hz one reads 144. It cannot see frames dropped purely on the compositor
+// thread, which is where a GPU-bound paint hides. For the authoritative number use
+// DevTools → Rendering → "Frame Rendering Stats". Treat this as a smoke alarm, not
+// a profiler.
+//
+// `worst` is the longest single gap in each window, and it's the more useful of the
+// two: a steady 58fps and a 58fps average carrying one 120ms stall feel completely
+// different, and only the second one reads as jank.
+
+const FPS_LOG_INTERVAL_MS = 1000;
+
+let fpsFrames = 0;
+let fpsWindowStart = performance.now();
+let fpsPrevFrame = fpsWindowStart;
+let fpsWorstFrame = 0;
+
+function resetFpsSample(now = performance.now()) {
+  fpsFrames = 0;
+  fpsWindowStart = now;
+  fpsPrevFrame = now;
+  fpsWorstFrame = 0;
+}
+
+function logFrameRate(now) {
+  fpsFrames++;
+
+  const frameTime = now - fpsPrevFrame;
+  if (frameTime > fpsWorstFrame) fpsWorstFrame = frameTime;
+  fpsPrevFrame = now;
+
+  const elapsed = now - fpsWindowStart;
+  if (elapsed >= FPS_LOG_INTERVAL_MS) {
+    const fps = Math.round((fpsFrames * 1000) / elapsed);
+    console.info(`${fps} fps · worst frame ${fpsWorstFrame.toFixed(1)}ms`);
+    resetFpsSample(now);
+  }
+
+  requestAnimationFrame(logFrameRate);
+}
+
+requestAnimationFrame(logFrameRate);
+
+// rAF is suspended entirely while the tab is hidden, so the first frame after
+// coming back is separated from the last one by however long the tab was away —
+// which would be logged as a multi-second "stall" that never happened.
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) resetFpsSample();
+});
