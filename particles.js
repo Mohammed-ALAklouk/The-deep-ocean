@@ -112,10 +112,10 @@ export class ParticleSystem {
   getTargetCount(reducedMotion = false) {
     const depth = this.getCurrentDepth();
 
-    if (depth < 200 || depth > 8000 || reducedMotion) return 0;
+    if (depth < 5 || depth > 8000 || reducedMotion) return 0;
 
-    // ramp up from 200m to 500m
-    const rampUp = Math.min((depth - 200) / 300, 1);
+    // ramp up from 0m to 500m
+    const rampUp = Math.min((depth - 5) / 300, 1);
 
     // Start fading out smoothly from 5000m all the way down to 8000m
     let fadeOut = 1;
