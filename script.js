@@ -219,14 +219,14 @@ gsap.utils.toArray(".zone-text-container").forEach((textEl) => {
   gsap.fromTo(textEl,
     { y: 0 },
     {
-      y: 800, // Moves down exactly 800px
-      ease: "none",
-      immediateRender: false, // Prevents killing the entrance animation!
       scrollTrigger: {
         trigger: parentZone,
         start: "top top", // Starts pinning when the zone reaches the top of the viewport
         end: "top top-=800px", // Ends exactly 800px later
         scrub: true,
+        pin: textEl, // Pin the element in place during this scroll range
+        pinSpacing: false, // Don't add extra space for the pin
+        pinType: "transform", // Use transform for pinning to avoid layout shifts
       }
     }
   );
