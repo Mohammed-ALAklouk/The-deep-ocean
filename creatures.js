@@ -107,8 +107,8 @@ fetch('creatures.json')
           y: 0,
           scrollTrigger: {
             trigger: el,
-            start: "top bottom",
-            end: "top center",
+            start: "top 100%",
+            end: "top 40%", 
             scrub: true,
             onUpdate: (self) => applyBlur((1 - self.progress) * BLUR_MAX),
             // onUpdate isn't guaranteed to land exactly on the boundary values, so
@@ -119,7 +119,7 @@ fetch('creatures.json')
         }
       );
 
-      // Fade out and blur again as it scrolls past, above the viewport
+      // // Fade out and blur again as it scrolls past, above the viewport
       const fadeOut = gsap.fromTo(el,
         { opacity: 1 },
         {
@@ -127,8 +127,8 @@ fetch('creatures.json')
           immediateRender: false,
           scrollTrigger: {
             trigger: el,
-            start: "top top+=200",
-            end: "bottom top",
+            start: "top 10%",
+            end: "bottom 0%",
             scrub: true,
             onUpdate: (self) => applyBlur(self.progress * BLUR_MAX),
             onLeave: () => applyBlur(BLUR_MAX),

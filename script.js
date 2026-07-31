@@ -213,9 +213,10 @@ gsap.utils.toArray(".zone-text-container").forEach((textEl) => {
     }
   );
 
-  // 2. Manual Pin: Instead of GSAP's pin:true (which causes layout jumps when unpinning without pinSpacing),
-  // we manually translate the Y position at the exact speed of the user's scroll.
-  // This visually freezes it on the screen for 800px.
+  // 2. Pin: freezes in place for the rest of the zone, while the zone scrolls past
+  // I specify that textEl is to be pinned, not parentZone
+  // pinSpacing:false prevents GSAP from adding extra space for the pin
+  // pinType:"transform" avoids layout shifts by using transform for pinning
   gsap.fromTo(textEl,
     { y: 0 },
     {
