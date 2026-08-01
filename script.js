@@ -190,11 +190,10 @@ ScrollTrigger.create({
 gsap.utils.toArray(".zone-text-container").forEach((textEl) => {
   const parentZone = textEl.closest(".zone");
 
-  // Blur is deliberately not scrubbed here either — same reasoning as the
-  // creatures in creatures.js, but this case was worse per element: .zone-title and
-  // .zone-description are .glass-cards, so each one carries a backdrop-filter. A
-  // `filter` on their container makes it a backdrop root, and re-rasterizing it on
-  // every scroll frame drags the children's 16px backdrop blur along with it.
+  // Blur is deliberately not scrubbed on these. .zone-title and .zone-description
+  // are .glass-cards, so each one carries a backdrop-filter. A `filter` on their
+  // container makes it a backdrop root, and re-rasterizing it on every scroll frame
+  // drags the children's 16px backdrop blur along with it.
   let entranceFrom = { opacity: 0, y: 30 };
   if (reducedMotion) {
     entranceFrom = { opacity: 0 };

@@ -349,34 +349,7 @@ body {
      overflow the page. This lets the image actually shrink to fit. */
   min-width: 0;
   min-height: 0;
-
-  /* No `filter` here on purpose — this is the sharp, settled state, and the absence
-     of the property is the point. `filter: blur(0px)` would NOT be equivalent: a
-     zero-radius blur still creates a stacking context and a containing block and
-     keeps the element on the filtered compositing path, so leaving 128 of them
-     parked at blur(0px) costs something for nothing.
-     There is deliberately no `transition` either. See the [data-blur] steps below. */
 }
-
-/* Blur is scrubbed to scroll position — it ramps as the creature rises into view,
-   which is the whole look — but only ever takes these seven values instead of a new
-   radius on every frame. That distinction is the entire performance story: each
-   distinct radius is a fresh convolution over a full-size creature PNG that already
-   carries its own drop-shadow, so a continuous scrub meant ~60 re-rasters per
-   crossing where this means 7.
-   The step number IS the radius in px, so creatures.js can map progress straight
-   onto it. No transition between steps, and that's not an oversight — transitioning
-   would interpolate through the in-between radii and put the per-frame re-raster
-   straight back. The steps are invisible in practice because a blur ramp is soft by
-   nature and the opacity fade is running underneath it.
-   Levers if this is still too heavy: fewer steps (drop the odd ones), or move the
-   filter onto .creature img so the text label stays out of the re-raster. */
-.creature[data-blur="1"] { filter: blur(1px); }
-.creature[data-blur="2"] { filter: blur(2px); }
-.creature[data-blur="3"] { filter: blur(3px); }
-.creature[data-blur="4"] { filter: blur(4px); }
-.creature[data-blur="5"] { filter: blur(5px); }
-.creature[data-blur="6"] { filter: blur(6px); }
 
 .creature img {
   display: block;
