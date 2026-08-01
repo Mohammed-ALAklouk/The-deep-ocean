@@ -108,7 +108,8 @@ ScrollTrigger.create({
   trigger: ".site-footer",
   start: "top 70%",
   onEnter: () => {
-    const top = depthContainer.getBoundingClientRect().top + window.scrollY;
+    const zoneBottom = zonesContainer.getBoundingClientRect().bottom + window.scrollY;
+    const top = zoneBottom - depthContainer.offsetHeight;
     gsap.set(depthContainer, { position: "absolute", top, transform: "none" });
   },
   onLeaveBack: () => {
