@@ -55,15 +55,6 @@ fetch('creatures.json')
       elements.push(el);
     });
 
-    // All 128 creatures just got inserted after Lenis/ScrollTrigger already
-    // measured the page at its pre-creature (hero-only) height, so their
-    // cached scroll limits are stale until told to remeasure — without this,
-    // Lenis clamps real scrolling to roughly the hero's height and every
-    // scroll-driven animation (like the depth counter's fade) reads the
-    // wrong scroll position.
-    lenis.resize();
-    ScrollTrigger.refresh();
-
     // These two tweens per creature used to also scrub `filter: blur(6px)` ->
     // `blur(0px)`. That was the single most expensive thing on the page. A scrubbed
     // filter is re-evaluated on every scroll frame, and every distinct blur radius

@@ -15,6 +15,24 @@ let hadal_zone_height = totalHeight - 6000;
 // data from that site line up correctly here.
 const px_per_metter = 50 / 3;
 
+// This is what gives the page its real height — 10924m of zones, ~182000px — and
+// it has to happen before the Lenis constructor below. Lenis measures the document
+// once, at construction, and caches the scroll limit from it; nothing re-measures
+// on its own when the content grows afterwards. Set these heights after that line
+// and Lenis caps scrolling at the hero's height (~700px) for the rest of the
+// session, unless something explicitly calls lenis.resize().
+let sunlight_element = document.querySelector('#sunlight');
+let twilight_element = document.querySelector('#twilight');
+let midnight_element = document.querySelector('#midnight');
+let abyssal_element = document.querySelector('#abyssal');
+let hadal_element = document.querySelector('#hadal');
+
+sunlight_element.style.minHeight = sunlight_zone_height * px_per_metter + 'px';
+twilight_element.style.minHeight = twilight_zone_height * px_per_metter + 'px';
+midnight_element.style.minHeight = midnight_zone_height * px_per_metter + 'px';
+abyssal_element.style.minHeight = abyssal_zone_height * px_per_metter + 'px';
+hadal_element.style.minHeight = hadal_zone_height * px_per_metter + 'px';
+
 gsap.registerPlugin(ScrollTrigger);
 // syncTouch drives touch scrolling through Lenis's own RAF loop instead of
 // leaving it to the browser's native (compositor-thread) scroll. The zone text
@@ -29,12 +47,6 @@ const lenis = new Lenis({
   smoothTouch: !reducedMotion,   // native touch scrolling when reduced
   lerp: reducedMotion ? 1 : 0.1, // 1 = no interpolation
 });
-// script.js is a module, so `lenis` is scoped to this file and invisible to
-// creatures.js (a classic script). The Lenis library itself squats on
-// `window.lenis` with an unrelated {version, touch} stub, which silently
-// shadowed this instance and broke creatures.js's `lenis.resize()` call.
-// Exposing the real instance here fixes that.
-window.lenis = lenis;
 
 lenis.on('scroll', ScrollTrigger.update);
 let scrollDiv = document.querySelector('.depth-counter');
@@ -67,18 +79,6 @@ function updateDepthCounter() {
 lenis.on('scroll', updateDepthCounter);
 window.addEventListener('resize', updateDepthCounter);
 updateDepthCounter();
-
-let sunlight_element = document.querySelector('#sunlight');
-let twilight_element = document.querySelector('#twilight');
-let midnight_element = document.querySelector('#midnight');
-let abyssal_element = document.querySelector('#abyssal');
-let hadal_element = document.querySelector('#hadal');
-
-sunlight_element.style.minHeight = sunlight_zone_height * px_per_metter + 'px';
-twilight_element.style.minHeight = twilight_zone_height * px_per_metter + 'px';
-midnight_element.style.minHeight = midnight_zone_height * px_per_metter + 'px';
-abyssal_element.style.minHeight = abyssal_zone_height * px_per_metter + 'px';
-hadal_element.style.minHeight = hadal_zone_height * px_per_metter + 'px';
 
 gsap.fromTo(document.querySelector(".depth-container"),
   { opacity: 0 },
@@ -573,10 +573,10 @@ if (canvas) {
   const particleSystem = new ParticleSystem(canvas, totalHeight, BUFFER, KILL);
 
   // The system caches .zones-container's scrollHeight instead of reading it every
-  // frame, so it needs telling when that height changes. ScrollTrigger.refresh is
-  // exactly that signal and covers both cases: resize, and creatures.js calling
-  // refresh() after inserting all 128 creatures (which is what sets the real page
-  // height in the first place).
+  // frame, so it needs telling when that height changes. The zone min-heights at
+  // the top of this file are set once and never touched again, so the only thing
+  // that moves that number afterwards is a viewport resize — and ScrollTrigger
+  // already refreshes on resize, which makes this the exact signal to hang off.
   ScrollTrigger.addEventListener("refresh", () => particleSystem.invalidateLayout());
 
   const loop = () => {

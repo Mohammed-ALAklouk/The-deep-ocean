@@ -101,9 +101,9 @@ export class ParticleSystem {
     this.containerHeight = 0;   // resolved lazily; see getCurrentDepth
   }
 
-  // The container's height only changes on resize (and once, when creatures.js
-  // finishes inserting 128 creatures), so call this from those two places rather
-  // than re-reading it continuously.
+  // The container's height only changes on resize — the creatures are absolutely
+  // positioned over it and don't affect it — so call this from there rather than
+  // re-reading it continuously.
   invalidateLayout() {
     this.containerHeight = 0;
   }
