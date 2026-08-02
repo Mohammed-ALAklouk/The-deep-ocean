@@ -716,7 +716,7 @@ body {
      repainting on the main thread every frame — which for an SVG means
      re-tessellating the Bezier path, not blitting a cached bitmap. Measured on a
      144Hz display: ~40-50fps without this, a locked 144 with it. */
-  will-change: transform;
+  /* will-change: transform; */
 }
 
 .wave-back path {
@@ -932,7 +932,13 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .auto-scroll-btn,
   .zone-nav-dot,
-  .back-to-top-arrow {
+  .back-to-top-arrow,
+  .wave,
+  .buoy, 
+  .cloud-1,
+  .cloud-2,
+  .cloud-3,
+  .cloud-4 {
     animation: none !important;
     transition: none !important;
   }
