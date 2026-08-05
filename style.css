@@ -707,16 +707,6 @@ body {
   left: -5%;
   width: 110%;
   height: calc(100% + 20px);
-
-  /* Forces each wave onto its own compositor layer. Without it Chromium declined to
-     promote them: the three waves fully overlap each other (each is 1392x300, so all
-     three together paint 1.36x the viewport inside a 280px strip) and .buoy animates
-     in between wave-mid and wave-front in DOM order. Overlapping animated siblings
-     are exactly the case where promotion gets abandoned, and the fallback is
-     repainting on the main thread every frame — which for an SVG means
-     re-tessellating the Bezier path, not blitting a cached bitmap. Measured on a
-     144Hz display: ~40-50fps without this, a locked 144 with it. */
-  /* will-change: transform; */
 }
 
 .wave-back path {
@@ -933,8 +923,6 @@ body {
   .auto-scroll-btn,
   .zone-nav-dot,
   .back-to-top-arrow,
-  .wave,
-  .buoy, 
   .cloud-1,
   .cloud-2,
   .cloud-3,
