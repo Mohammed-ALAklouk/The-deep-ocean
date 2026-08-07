@@ -931,3 +931,10 @@ body {
     transition: none !important;
   }
 }
+
+html {
+  scrollbar-width: none;        /* Firefox */
+}
+html::-webkit-scrollbar {
+  display: none;                /* Chrome, Edge, Safari */
+}
