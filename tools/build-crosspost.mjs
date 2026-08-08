@@ -10,9 +10,11 @@
 //
 //   SVG   dev.to will not render it → rendered to a 2x PNG and hotlinked
 //         from the site, where the file is already published.
-//   MP4   dev.to cannot host video → the markdown keeps pointing at the .gif,
-//         but the gifs are not in the repo (7.6 MB), so they are left as
-//         upload placeholders for the editor.
+//   CLIP  dev.to cannot host video, and the gif version of these clips looks
+//         terrible — 256 colours is not enough for a dark ocean gradient, so
+//         it bands and dithers. A single frame is pulled out of the mp4
+//         instead and hotlinked as a lossless PNG. Clips with no frame
+//         chosen in STILLS fall back to an upload placeholder.
 //   TITLE dev.to takes it from the front matter, so the leading H1 is
 //         dropped to avoid printing it twice.
 //
@@ -104,6 +106,39 @@ img{display:block;width:${width}px;height:${height}px}</style>
   return { width: width * 2, height: height * 2 };
 }
 
+// ---- pulling a still out of each clip ----------------------------------
+// Seconds into the clip, chosen by eye: a frame that reads on its own, with
+// no hover tooltip showing and the composition settled. To re-pick one,
+// change the number and run with --force.
+
+const STILLS = {
+  'hero.gif':           5.0,   // clouds spread out, buoy up on the wave
+  'twilight-zone.gif':  2.4,
+  'hadal-void.gif':     2.0,   // any frame — the point is that it is empty
+  'creatures-337m.gif': 2.6,
+};
+
+function findFfmpeg() {
+  for (const bin of [process.env.FFMPEG_PATH, 'ffmpeg'].filter(Boolean)) {
+    try {
+      execFileSync(bin, ['-version'], { stdio: 'pipe' });
+      return bin;
+    } catch { /* not this one */ }
+  }
+  return null;
+}
+
+function renderStill(ffmpeg, mp4Path, pngPath, seconds) {
+  execFileSync(ffmpeg, [
+    '-y', '-v', 'error',
+    '-i', mp4Path,
+    '-ss', String(seconds),
+    '-frames:v', '1',
+    '-update', '1',
+    pngPath,
+  ], { stdio: 'pipe' });
+}
+
 // ---- transform ---------------------------------------------------------
 
 // [ \t] rather than \s for the trailing run: \s would match the newline as
@@ -113,6 +148,7 @@ const IMAGE_RE = /^!\[([^\]]*)\]\((media\/[^)\s]+)\)[ \t]*$/gm;
 function transform(markdown) {
   const uploads = [];
   const rendered = [];
+  const stills = [];
 
   // dev.to prints the title from the front matter.
   let body = markdown.replace(/^#\s+.*\n+/, '');
@@ -127,6 +163,15 @@ function transform(markdown) {
     }
 
     if (name.endsWith('.gif')) {
+      const png = name.replace(/\.gif$/, '.png');
+
+      // A chosen frame beats a 256-colour gif every time. Only clips with
+      // no frame picked fall back to uploading the gif by hand.
+      if (name in STILLS) {
+        stills.push({ mp4: name.replace(/\.gif$/, '.mp4'), png, at: STILLS[name] });
+        return `![${alt}](${MEDIA_BASE}${png})`;
+      }
+
       uploads.push(name);
       return `![${alt}](${UPLOAD_MARKER}${name})`;
     }
@@ -134,7 +179,7 @@ function transform(markdown) {
     return `![${alt}](${MEDIA_BASE}${name})`;
   });
 
-  return { body, uploads, rendered };
+  return { body, uploads, rendered, stills };
 }
 
 // dev.to shows the description in search results and on the card, where
@@ -172,7 +217,14 @@ const markdown = readFileSync(SRC, 'utf8').replace(/\r\n/g, '\n');
 const title = (markdown.match(/^#\s+(.*)$/m) || [, 'Untitled'])[1].trim();
 const description = shorten(POST.dek);
 
-const { body, uploads, rendered } = transform(markdown);
+const { body, uploads, rendered, stills } = transform(markdown);
+
+// A PNG is current when it is newer than the file it came from.
+const isCurrent = (pngPath, sourcePath) =>
+  existsSync(pngPath) && statSync(pngPath).mtimeMs >= statSync(sourcePath).mtimeMs;
+
+const report = (png) =>
+  console.log(`  ${png} — ${Math.round(statSync(join(MEDIA_DIR, png)).size / 1024)} KB`);
 
 if (!skipRender) {
   const browser = findBrowser();
@@ -182,24 +234,58 @@ if (!skipRender) {
     const svgPath = join(MEDIA_DIR, svg);
     const pngPath = join(MEDIA_DIR, png);
 
-    const current = existsSync(pngPath) && statSync(pngPath).mtimeMs >= statSync(svgPath).mtimeMs;
-    if (current && !force) {
+    if (isCurrent(pngPath, svgPath) && !force) {
       console.log(`  ${png} — up to date`);
       continue;
     }
 
-    const { width, height } = renderPng(browser, svgPath, pngPath);
-    const kb = Math.round(statSync(pngPath).size / 1024);
-    console.log(`  ${png} — ${width}x${height}, ${kb} KB`);
+    renderPng(browser, svgPath, pngPath);
+    report(png);
+  }
+
+  if (stills.length) {
+    const ffmpeg = findFfmpeg();
+
+    if (!ffmpeg) {
+      // Not fatal: the markdown still points at the PNGs, and if they are
+      // already on disk from an earlier run there is nothing to do.
+      console.log('\nffmpeg not found — skipping the clip stills.');
+      console.log('Install it, or set FFMPEG_PATH, if any of them need re-cutting.');
+    } else {
+      console.log('\ncutting stills out of the clips');
+
+      for (const { mp4, png, at } of stills) {
+        const mp4Path = join(MEDIA_DIR, mp4);
+        const pngPath = join(MEDIA_DIR, png);
+
+        if (isCurrent(pngPath, mp4Path) && !force) {
+          console.log(`  ${png} — up to date`);
+          continue;
+        }
+
+        renderStill(ffmpeg, mp4Path, pngPath, at);
+        console.log(`  ${png} — frame at ${at}s, ${Math.round(statSync(pngPath).size / 1024)} KB`);
+      }
+    }
   }
 }
 
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(OUT, frontMatter(title, description) + body, 'utf8');
 
-console.log(`\nblog/export/devto.md — ${rendered.length} diagrams hotlinked, ${uploads.length} clips to upload`);
+console.log(
+  `\nblog/export/devto.md — ${rendered.length} diagrams and ${stills.length} stills hotlinked` +
+  (uploads.length ? `, ${uploads.length} clips to upload by hand` : ', nothing to upload by hand')
+);
 
 // ---- what is left to do by hand ---------------------------------------
+
+const uploadStep = uploads.length
+  ? `\n  2. Paste blog/export/devto.md into the dev.to editor (markdown mode), then
+     drag these in where the ${UPLOAD_MARKER} placeholders are:
+${uploads.map((f) => `       blog/media/${f}`).join('\n')}\n`
+  : `\n  2. Paste blog/export/devto.md into the dev.to editor (markdown mode).
+     Every image is hotlinked, so there is nothing to upload.\n`;
 
 console.log(`
 Before this reads correctly on dev.to:
@@ -207,18 +293,17 @@ Before this reads correctly on dev.to:
   1. Commit and deploy blog/media/*.png. The markdown hotlinks them from
      ${MEDIA_BASE}
      so they have to be live first.
-
-  2. Paste blog/export/devto.md into the dev.to editor (markdown mode), then
-     drag these in where the ${UPLOAD_MARKER} placeholders are:
-${uploads.map((f) => `       blog/media/${f}`).join('\n')}
-
+${uploadStep}
   3. Publish here first and let Google index it before you cross-post.
      canonical_url is already set to ${POST.canonical}
 
+The four clips are stills on dev.to, not animations. The live site is where
+they move, which is what the demo link at the top is for.
+
 For Medium, there is no file to export — paste ${POST.canonical}
-into medium.com/p/import. It scrapes the live page and sets its canonical
-to it automatically. The four clips are <video> on the site and Medium will
-drop them, so drag the same gifs in afterwards.
+into medium.com/p/import. It scrapes the live page and sets its canonical to
+it automatically. It will drop the <video> tags, so drop the same stills from
+blog/media/ in afterwards.
 `);
 
 // ---- optional: create a dev.to draft ----------------------------------
