@@ -169,6 +169,7 @@ navDots.forEach((dot) => {
   dot.addEventListener("click", () => {
     const zone = document.getElementById(dot.dataset.target);
     const targetY = zone.getBoundingClientRect().top + window.scrollY;
+    stopAutoScroll();  // cancel any ongoing auto-scroll first, so it doesn't fight the click
     lenis.scrollTo(targetY);
   });
 });
