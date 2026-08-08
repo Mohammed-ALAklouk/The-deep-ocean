@@ -1,0 +1,62 @@
+/* ============================================================
+   THE DEEP SEA — design tokens
+   Define values once here, then only ever use var(--name).
+   Shared by the descent (style.css) and the write-up (blog/blog.css),
+   so link this before either of them.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+
+  /* --- COLOR: depth ramp (surface light → trench black) --------- */
+  --depth-1: hsl(188 58% 84%);   /* 0m    — bright waterline */
+  --depth-2: hsl(200 88% 26%);   /* 200m  — darker, closer to the real Deep Sea's water color */
+  --depth-3: hsl(225 40% 4%);    /* 500m  — black             */
+  --depth-4: hsl(225 40% 4%);    /* black */
+  --depth-5: hsl(225 40% 4%);    /* black */
+  --depth-6: hsl(225 40% 4%);    /* black (drop to 0% lightness for absolute trench-floor black) */
+
+  /* --- COLOR: hero sky (clear sky → sunset → waterline) ---------- */
+  --sky-top:    hsl(210 60% 72%);   /* soft clear sky              */
+  --sky-mid:    hsl(30 70% 75%);    /* warm peachy horizon         */
+  --sky-bottom: hsl(188 50% 80%);   /* warm teal, bridges to water */
+
+  /* --- COLOR: water surface — deliberately separate from --sky-bottom
+     so the waves/top zone can be darkened without changing the hero sky. */
+  --water-surface: hsl(199 90% 38%);
+
+  /* --- COLOR: bioluminescence accent ---------------------------- */
+  --glow:        hsl(165 92% 62%);   /* core cyan-green light       */
+  --glow-bright: hsl(168 96% 74%);   /* hottest center of the point */
+  --glow-dim:    hsl(172 60% 40%);   /* faint outer halo            */
+
+  /* --- COLOR: semantic roles (use THESE in your components) ------ */
+  --text-on-light: hsl(220 45% 11%);   /* dark ink for the bright surface */
+  --text-on-dark:  hsl(190 28% 90%);   /* cool off-white for the deep    */
+  --text-muted:    hsl(199 20% 60%);   /* captions / secondary copy      */
+
+  /* --- TYPE: families ------------------------------------------- */
+  --font-display: "Cormorant Garamond", "Times New Roman", serif;
+  --font-body:    "Hanken Grotesk", system-ui, -apple-system, sans-serif;
+  --font-mono:    "Space Mono", ui-monospace, "Courier New", monospace;
+
+  /* --- TYPE: fluid scale, ~1.25 ratio — clamp(min, fluid, max) --- */
+  --text-sm:      clamp(0.85rem, 0.81rem + 0.20vw, 0.95rem);
+  --text-base:    clamp(1.00rem, 0.96rem + 0.25vw, 1.13rem);  /* body */
+  --text-md:      clamp(1.20rem, 1.12rem + 0.40vw, 1.45rem);
+  --text-lg:      clamp(1.45rem, 1.32rem + 0.65vw, 1.85rem);
+  --text-xl:      clamp(1.75rem, 1.52rem + 0.95vw, 2.35rem);
+  --text-2xl:     clamp(2.10rem, 1.75rem + 1.35vw, 3.00rem);
+
+  /* --- SPACING: 8px base, expressed in rem ---------------------- */
+  --space-sm:  1.00rem;  /* 16px */
+  --space-md:  1.50rem;  /* 24px */
+  --space-lg:  2.00rem;  /* 32px */
+
+  /* --- SHAPE ---------------------------------------------------- */
+  --radius-sm:   2px;
+  --radius-md:   6px;
+
+
+}

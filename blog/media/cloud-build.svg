@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 320" width="880" height="320" role="img" aria-label="A cloud built in three steps: one ellipse, then unblurred box-shadows acting as opaque extra puffs, then a blur over the whole thing.">
+  <defs>
+    <style>
+      .panel { fill: #f6f9fb; stroke: hsl(200 30% 88%); stroke-width: 1; }
+      .ink   { fill: hsl(220 45% 11%); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .muted { fill: hsl(199 20% 45%); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .mono  { font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace; }
+      .sm    { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 11.5px; }
+      .xs    { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 10.5px; }
+      .hdr   { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 14px; font-weight: 600; }
+      .step  { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 12.5px; font-weight: 600; }
+      .num   { font-size: 11px; font-weight: 700; fill: #ffffff; font-family: system-ui, sans-serif; }
+    </style>
+    <linearGradient id="csky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="hsl(210 60% 74%)"/>
+      <stop offset="100%" stop-color="hsl(205 62% 84%)"/>
+    </linearGradient>
+    <filter id="soften" x="-40%" y="-60%" width="180%" height="220%">
+      <feGaussianBlur stdDeviation="9"/>
+    </filter>
+
+    <!-- the base ellipse: a div with border-radius: 50% -->
+    <g id="base">
+      <ellipse cx="0" cy="0" rx="66" ry="24" fill="#ffffff"/>
+    </g>
+    <!-- the box-shadow puffs: no blur radius, so they stay opaque -->
+    <g id="puffs">
+      <circle cx="-44" cy="6"   r="30" fill="#ffffff"/>
+      <circle cx="-8"  cy="-13" r="40" fill="#ffffff"/>
+      <circle cx="34"  cy="2"   r="27" fill="#ffffff"/>
+      <circle cx="60"  cy="9"   r="19" fill="#ffffff"/>
+    </g>
+  </defs>
+
+  <rect class="panel" x="8" y="8" width="864" height="304" rx="10"/>
+  <text class="ink hdr" x="24" y="32">A cloud, in three declarations</text>
+  <text class="muted sm" x="24" y="50">the trick is that the shadows have a spread but no blur, so they read as extra puffs rather than shadows</text>
+
+  <!-- ===== step 1 ===== -->
+  <rect x="32" y="70" width="256" height="150" rx="6" fill="url(#csky)"/>
+  <g transform="translate(160,150)"><use href="#base"/></g>
+  <circle cx="52" cy="90" r="11" fill="hsl(200 88% 26%)"/>
+  <text class="num" x="52" y="94" text-anchor="middle">1</text>
+  <text class="ink step" x="72" y="94">an ellipse</text>
+  <text class="mono xs" fill="hsl(199 20% 40%)" x="32" y="242">width: 132px; height: 48px;</text>
+  <text class="mono xs" fill="hsl(199 20% 40%)" x="32" y="258">border-radius: 50%;</text>
+
+  <!-- ===== step 2 ===== -->
+  <rect x="312" y="70" width="256" height="150" rx="6" fill="url(#csky)"/>
+  <g transform="translate(440,150)"><use href="#puffs"/><use href="#base"/></g>
+  <circle cx="332" cy="90" r="11" fill="hsl(200 88% 26%)"/>
+  <text class="num" x="332" y="94" text-anchor="middle">2</text>
+  <text class="ink step" x="352" y="94">opaque box-shadows</text>
+  <text class="mono xs" fill="hsl(199 20% 40%)" x="312" y="242">box-shadow:</text>
+  <text class="mono xs" fill="hsl(199 20% 40%)" x="312" y="258">  -44px 6px 0 30px #fff,</text>
+  <text class="mono xs" fill="hsl(199 20% 40%)" x="312" y="274">  -8px -13px 0 40px #fff, …</text>
+
+  <!-- ===== step 3 ===== -->
+  <rect x="592" y="70" width="256" height="150" rx="6" fill="url(#csky)"/>
+  <g transform="translate(720,150)" filter="url(#soften)"><use href="#puffs"/><use href="#base"/></g>
+  <circle cx="612" cy="90" r="11" fill="hsl(172 55% 32%)"/>
+  <text class="num" x="612" y="94" text-anchor="middle">3</text>
+  <text class="ink step" x="632" y="94">blur the whole thing</text>
+  <text class="mono xs" fill="hsl(199 20% 40%)" x="592" y="242">filter: blur(9px);</text>
+  <text class="xs" fill="hsl(172 55% 30%)" x="592" y="264">one soft mass, not five shapes</text>
+
+  <!-- flow arrows -->
+  <g fill="hsl(199 20% 62%)">
+    <path d="M294,145 L304,150 L294,155 Z"/>
+    <path d="M574,145 L584,150 L574,155 Z"/>
+  </g>
+  <g stroke="hsl(199 20% 62%)" stroke-width="1.4">
+    <line x1="290" y1="150" x2="296" y2="150"/>
+    <line x1="570" y1="150" x2="576" y2="150"/>
+  </g>
+</svg>

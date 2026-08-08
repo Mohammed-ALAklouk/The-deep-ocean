@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 340" width="880" height="340" role="img" aria-label="A fixed 1440 by 180 viewBox stretched with preserveAspectRatio none squeezes the same wavelength into a narrow screen while the amplitude stays, making the humps steep; rebuilding the path from the real width with fewer humps restores the proportions.">
+  <defs>
+    <style>
+      .panel { fill: #f6f9fb; stroke: hsl(200 30% 88%); stroke-width: 1; }
+      .ink   { fill: hsl(220 45% 11%); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .muted { fill: hsl(199 20% 45%); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .mono  { font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace; }
+      .sm    { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 11.5px; }
+      .xs    { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 10.5px; }
+      .hdr   { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 14px; font-weight: 600; }
+      .lbl   { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 12.5px; font-weight: 600; }
+      .dev   { fill: none; stroke: hsl(199 20% 60%); stroke-width: 1.5; }
+    </style>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="hsl(210 60% 78%)"/>
+      <stop offset="60%"  stop-color="hsl(30 70% 82%)"/>
+      <stop offset="100%" stop-color="hsl(188 50% 84%)"/>
+    </linearGradient>
+  </defs>
+
+  <rect class="panel" x="8" y="8" width="864" height="324" rx="10"/>
+  <text class="ink hdr" x="24" y="32">Why the waves broke on phones</text>
+  <text class="muted sm" x="24" y="50">the amplitude is in the same coordinate system as the wavelength, so only one of them survives the stretch</text>
+
+  <!-- ============ A: desktop ============ -->
+  <text class="ink lbl" x="230" y="80">desktop — as designed</text>
+  <clipPath id="clipA"><rect x="40" y="90" width="380" height="160" rx="4"/></clipPath>
+  <g clip-path="url(#clipA)">
+    <rect x="40" y="90" width="380" height="160" fill="url(#sky)"/>
+    <path fill="hsl(199 90% 38%)"
+          d="M40,180 Q87.5,158 135,180 Q182.5,202 230,180 Q277.5,158 325,180 Q372.5,202 420,180 L420,250 L40,250 Z"/>
+  </g>
+  <rect class="dev" x="40" y="90" width="380" height="160" rx="4"/>
+  <text class="muted xs mono" x="230" y="266" text-anchor="middle">viewBox 1440 × 180 · 2 humps</text>
+
+  <!-- ============ B: phone before ============ -->
+  <text class="ink lbl" x="535" y="80" text-anchor="middle">phone — before</text>
+  <clipPath id="clipB"><rect x="470" y="90" width="130" height="160" rx="4"/></clipPath>
+  <g clip-path="url(#clipB)">
+    <rect x="470" y="90" width="130" height="160" fill="url(#sky)"/>
+    <path fill="hsl(199 90% 38%)"
+          d="M470,180 Q486.25,158 502.5,180 Q518.75,202 535,180 Q551.25,158 567.5,180 Q583.75,202 600,180 L600,250 L470,250 Z"/>
+  </g>
+  <rect class="dev" x="470" y="90" width="130" height="160" rx="4"/>
+  <text class="muted xs mono" x="535" y="266" text-anchor="middle">same 2 humps,</text>
+  <text class="muted xs mono" x="535" y="280" text-anchor="middle">a third of the width</text>
+  <text class="xs" fill="hsl(14 72% 45%)" x="535" y="298" text-anchor="middle">wavelength shrank,</text>
+  <text class="xs" fill="hsl(14 72% 45%)" x="535" y="312" text-anchor="middle">amplitude didn't → choppy</text>
+
+  <!-- ============ C: phone after ============ -->
+  <text class="ink lbl" x="715" y="80" text-anchor="middle">phone — after</text>
+  <clipPath id="clipC"><rect x="650" y="90" width="130" height="160" rx="4"/></clipPath>
+  <g clip-path="url(#clipC)">
+    <rect x="650" y="90" width="130" height="160" fill="url(#sky)"/>
+    <path fill="hsl(199 90% 38%)"
+          d="M650,180 Q682.5,158 715,180 Q747.5,202 780,180 L780,250 L650,250 Z"/>
+  </g>
+  <rect class="dev" x="650" y="90" width="130" height="160" rx="4"/>
+  <text class="muted xs mono" x="715" y="266" text-anchor="middle">path rebuilt from the</text>
+  <text class="muted xs mono" x="715" y="280" text-anchor="middle">real width — 1 hump</text>
+  <text class="xs" fill="hsl(172 55% 30%)" x="715" y="298" text-anchor="middle">proportions preserved</text>
+
+  <!-- arrow between B and C -->
+  <path fill="none" stroke="hsl(199 20% 60%)" stroke-width="1.6" d="M612,170 L638,170"/>
+  <path fill="hsl(199 20% 60%)" d="M638,166 L646,170 L638,174 Z"/>
+
+  <text class="mono xs" fill="hsl(199 20% 45%)" x="24" y="316">const periods = Math.max(1, Math.round(width / 700))</text>
+</svg>

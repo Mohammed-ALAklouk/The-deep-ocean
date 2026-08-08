@@ -1,0 +1,419 @@
+/* ============================================================
+   THE DEEP SEA — the write-up.
+   The descent is dark; this page is the surface you come back up
+   to in order to read about it. Tokens come from ../tokens.css.
+   ============================================================ */
+
+:root {
+  /* Page-local roles. The shared tokens are tuned for a dark page,
+     so the light surface needs its own paper / rule / muted ink. */
+  --paper:        hsl(200 40% 97%);
+  --paper-raised: hsl(0 0% 100%);
+  --rule:         hsl(200 25% 88%);
+  --ink:          var(--text-on-light);
+  --ink-muted:    hsl(205 18% 38%);
+  --link:         var(--water-surface);
+  --measure:      68ch;          /* comfortable line length for body copy */
+  --toc-width:    15rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.7;
+  -webkit-text-size-adjust: 100%;
+}
+
+::selection { background: hsl(199 90% 38% / 0.18); }
+
+a { color: var(--link); text-underline-offset: 0.2em; }
+a:hover { color: hsl(199 90% 30%); }
+
+:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 0.6rem 1rem;
+  background: var(--paper-raised);
+  border-radius: var(--radius-md);
+}
+.skip-link:focus { left: 1rem; top: 1rem; }
+
+/* ---- READING PROGRESS -------------------------------------------------
+   A depth gauge for the article: it fills with the same surface → trench
+   ramp the site itself descends through. Width is set from JS. */
+.read-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  z-index: 50;
+  background: hsl(200 25% 88% / 0.6);
+}
+.read-progress > span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--depth-1), var(--water-surface) 55%, var(--depth-3));
+}
+
+/* ---- HEADER -----------------------------------------------------------
+   The hero, reduced to its two essentials: the sunset sky and the
+   waterline it hands off to. */
+.post-header {
+  position: relative;
+  padding: clamp(2rem, 6vw, 4.5rem) var(--space-md) 0;
+  background: linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 58%, var(--sky-bottom) 100%);
+  overflow: hidden;
+}
+
+.post-header-inner {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding-bottom: clamp(3.5rem, 9vw, 6rem);
+}
+
+.site-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: var(--space-lg);
+  color: var(--text-on-light);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.site-back:hover { color: var(--text-on-light); text-decoration: underline; }
+
+.post-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--text-2xl);
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+
+  /* Same clip-the-gradient-to-the-text trick as the site's "Ocean". */
+  background: linear-gradient(160deg, hsl(220 45% 11%) 30%, hsl(190 70% 35%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.post-dek {
+  max-width: 46ch;
+  margin: var(--space-md) 0 0;
+  font-size: var(--text-md);
+  line-height: 1.5;
+  color: hsl(220 35% 22%);
+}
+
+.post-meta {
+  margin-top: var(--space-md);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: hsl(220 30% 28%);
+}
+.post-meta .dot { margin: 0 0.6rem; opacity: 0.5; }
+
+.post-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: var(--space-lg);
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.15rem;
+  border: 1px solid hsl(220 45% 11% / 0.25);
+  border-radius: 999px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text-on-light);
+  background: hsl(0 0% 100% / 0.35);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.btn:hover { background: hsl(0 0% 100% / 0.6); color: var(--text-on-light); }
+.btn-primary {
+  background: var(--text-on-light);
+  border-color: var(--text-on-light);
+  color: hsl(190 28% 95%);
+}
+.btn-primary:hover { background: hsl(220 45% 18%); color: hsl(190 28% 95%); }
+
+/* The waterline: same three stacked Béziers as the hero, held still. */
+.header-waves {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: clamp(60px, 9vw, 110px);
+  pointer-events: none;
+}
+.header-waves svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.header-waves .wave-back  { fill: hsl(199 60% 62%); }
+.header-waves .wave-mid   { fill: var(--water-surface); }
+.header-waves .wave-front { fill: var(--paper); }
+
+/* ---- LAYOUT -----------------------------------------------------------
+   One column by default; the table of contents only earns its keep once
+   there is room for it beside the text. */
+.post-layout {
+  max-width: calc(var(--measure) + var(--toc-width) + 8rem);
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 3.5rem) var(--space-md) 0;
+}
+
+.post-toc { display: none; }
+
+.post-body {
+  max-width: var(--measure);
+  margin: 0 auto;
+}
+
+@media (min-width: 1100px) {
+  .post-layout {
+    display: grid;
+    grid-template-columns: var(--toc-width) minmax(0, 1fr);
+    gap: 4rem;
+    align-items: start;
+  }
+  .post-toc {
+    display: block;
+    position: sticky;
+    top: 2.5rem;
+    max-height: calc(100vh - 5rem);
+    overflow-y: auto;
+    font-size: var(--text-sm);
+  }
+  .post-body { margin: 0; }
+}
+
+.post-toc h2 {
+  margin: 0 0 0.75rem;
+  font-size: var(--text-sm);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.post-toc ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-left: 1px solid var(--rule);
+}
+.post-toc li a {
+  display: block;
+  padding: 0.28rem 0 0.28rem 0.9rem;
+  margin-left: -1px;
+  border-left: 1px solid transparent;
+  color: var(--ink-muted);
+  line-height: 1.35;
+  text-decoration: none;
+}
+.post-toc li a:hover { color: var(--ink); }
+.post-toc .toc-h3 a { padding-left: 1.75rem; font-size: 0.92em; }
+.post-toc a.is-current {
+  color: var(--link);
+  border-left-color: var(--link);
+  font-weight: 600;
+}
+
+/* ---- ARTICLE TYPE ---------------------------------------------------- */
+.post-body > * + * { margin-top: var(--space-md); }
+
+.post-body h2,
+.post-body h3 {
+  position: relative;
+  scroll-margin-top: 2rem;
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+}
+.post-body h2 {
+  margin-top: calc(var(--space-lg) * 1.6);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--rule);
+  font-size: var(--text-xl);
+}
+.post-body h3 {
+  margin-top: calc(var(--space-lg) * 1.1);
+  font-size: var(--text-lg);
+}
+
+.heading-anchor {
+  position: absolute;
+  left: -1.1em;
+  top: 0;
+  padding-right: 0.4em;
+  color: var(--rule);
+  font-family: var(--font-body);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.post-body h2:hover .heading-anchor,
+.post-body h3:hover .heading-anchor,
+.heading-anchor:focus-visible { opacity: 1; }
+@media (max-width: 640px) { .heading-anchor { display: none; } }
+
+.post-body ul {
+  margin-left: 0;
+  padding-left: 1.25rem;
+}
+.post-body li + li { margin-top: 0.35rem; }
+.post-body li::marker { color: var(--link); }
+
+.post-body strong { font-weight: 700; }
+
+/* ---- CODE ------------------------------------------------------------- */
+.post-body :not(pre) > code {
+  padding: 0.12em 0.36em;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-sm);
+  background: var(--paper-raised);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  word-break: break-word;
+}
+
+.code-block {
+  position: relative;
+  margin-top: var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--depth-3);
+  overflow: hidden;
+}
+.code-block .code-lang {
+  display: block;
+  padding: 0.5rem 1rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: hsl(190 20% 55%);
+}
+.code-block pre {
+  margin: 0;
+  padding: 0.75rem 1rem 1.1rem;
+  overflow-x: auto;          /* long lines scroll inside the block, not the page */
+}
+.code-block code {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.65;
+  color: hsl(190 28% 86%);
+  background: none;
+  tab-size: 2;
+}
+
+/* Space Mono is wide. Shrink it on phones so fewer snippets need a
+   sideways scroll to read. */
+@media (max-width: 640px) {
+  .code-block code { font-size: 0.72rem; }
+  .code-block pre { padding-inline: 0.75rem; }
+}
+
+/* Fallback colors, in case the highlighter never loads. */
+.code-block .hljs-comment { color: hsl(199 15% 50%); font-style: italic; }
+.code-block .hljs-string  { color: hsl(40 70% 72%); }
+.code-block .hljs-keyword { color: var(--glow); }
+.code-block .hljs-title,
+.code-block .hljs-attr    { color: hsl(190 70% 70%); }
+
+/* ---- FIGURES ---------------------------------------------------------- */
+.post-figure {
+  margin: calc(var(--space-lg) * 1.2) 0;
+}
+.post-figure img,
+.post-figure video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-md);
+  background: var(--paper-raised);
+}
+.post-figure figcaption {
+  margin-top: 0.7rem;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--rule);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+/* Full-bleed within the reading column: diagrams are 880px wide and get
+   cramped at --measure on a big screen. */
+@media (min-width: 900px) {
+  .post-figure { margin-left: -3rem; margin-right: -3rem; }
+  .post-figure figcaption { margin-left: 3rem; margin-right: 3rem; }
+}
+
+/* ---- FOOTER ----------------------------------------------------------- */
+.post-footer {
+  margin-top: calc(var(--space-lg) * 2);
+  padding: var(--space-lg) var(--space-md) calc(var(--space-lg) * 2);
+  border-top: 1px solid var(--rule);
+  background: linear-gradient(180deg, var(--paper) 0%, hsl(200 45% 93%) 100%);
+  text-align: center;
+}
+.post-footer-inner {
+  max-width: var(--measure);
+  margin: 0 auto;
+}
+.post-footer h2 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--text-lg);
+}
+.post-footer p {
+  margin: 0 auto var(--space-md);
+  max-width: 46ch;
+  color: var(--ink-muted);
+}
+.post-footer .post-actions { justify-content: center; }
+.post-footer-credit {
+  margin-top: var(--space-lg);
+  font-size: var(--text-sm);
+}
+
+/* ---- REDUCED MOTION ---------------------------------------------------
+   The clips are the only moving parts on this page. The script swaps them
+   to paused-with-controls; this just keeps everything else still. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  .read-progress, .post-toc, .post-actions, .header-waves { display: none; }
+  body { background: #fff; }
+  .post-body { max-width: none; }
+}

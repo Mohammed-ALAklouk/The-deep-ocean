@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 430" width="880" height="430" role="img" aria-label="GSAP's pin wraps each pinned element in a pin-spacer and adds the pin distance as padding, adding 800 pixels per zone, 4000 pixels in total, which pushes the depth scale 240 metres out.">
+  <defs>
+    <style>
+      .panel { fill: #f6f9fb; stroke: hsl(200 30% 88%); stroke-width: 1; }
+      .ink   { fill: hsl(220 45% 11%); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .muted { fill: hsl(199 20% 45%); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .mono  { font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace; }
+      .sm    { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 11.5px; }
+      .lbl   { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 13px; }
+      .hdr   { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 14px; font-weight: 600; }
+      .zone  { stroke: #ffffff; stroke-width: 1; }
+      .warn  { fill: hsl(14 72% 42%); }
+    </style>
+    <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="8" height="8" fill="hsl(14 72% 93%)"/>
+      <line x1="0" y1="0" x2="0" y2="8" stroke="hsl(14 72% 58%)" stroke-width="3"/>
+    </pattern>
+  </defs>
+
+  <rect class="panel" x="8" y="8" width="864" height="414" rx="10"/>
+  <text class="ink hdr" x="24" y="32">What one pin does to a 182,000 px page</text>
+  <text class="muted sm" x="24" y="50">five zones, one pinned text element in each</text>
+
+  <!-- ========== LEFT: as laid out ========== -->
+  <text class="ink lbl" x="120" y="76" text-anchor="middle">what I laid out</text>
+  <g>
+    <rect class="zone" x="70" y="86"  width="100" height="20" fill="hsl(188 58% 74%)"/>
+    <rect class="zone" x="70" y="106" width="100" height="32" fill="hsl(199 90% 38%)"/>
+    <rect class="zone" x="70" y="138" width="100" height="56" fill="hsl(200 88% 26%)"/>
+    <rect class="zone" x="70" y="194" width="100" height="40" fill="hsl(210 70% 14%)"/>
+    <rect class="zone" x="70" y="234" width="100" height="66" fill="hsl(225 40% 6%)"/>
+  </g>
+  <text class="muted sm mono" x="120" y="320" text-anchor="middle">182,000 px</text>
+  <text class="muted sm" x="120" y="336" text-anchor="middle">= 10,924 m</text>
+
+  <!-- ========== RIGHT: as rendered ========== -->
+  <text class="ink lbl" x="380" y="76" text-anchor="middle">what GSAP rendered</text>
+  <g>
+    <rect class="zone" x="330" y="86"  width="100" height="20" fill="hsl(188 58% 74%)"/>
+    <rect        x="330" y="106" width="100" height="12" fill="url(#hatch)"/>
+    <rect class="zone" x="330" y="118" width="100" height="32" fill="hsl(199 90% 38%)"/>
+    <rect        x="330" y="150" width="100" height="12" fill="url(#hatch)"/>
+    <rect class="zone" x="330" y="162" width="100" height="56" fill="hsl(200 88% 26%)"/>
+    <rect        x="330" y="218" width="100" height="12" fill="url(#hatch)"/>
+    <rect class="zone" x="330" y="230" width="100" height="40" fill="hsl(210 70% 14%)"/>
+    <rect        x="330" y="270" width="100" height="12" fill="url(#hatch)"/>
+    <rect class="zone" x="330" y="282" width="100" height="66" fill="hsl(225 40% 6%)"/>
+    <rect        x="330" y="348" width="100" height="12" fill="url(#hatch)"/>
+  </g>
+  <text class="warn sm mono" x="380" y="380" text-anchor="middle">186,000 px</text>
+  <text class="warn sm" x="380" y="396" text-anchor="middle">but still labelled 10,924 m</text>
+
+  <!-- spacer callouts -->
+  <g stroke="hsl(14 72% 52%)" stroke-width="2">
+    <line x1="444" y1="106" x2="444" y2="118"/>
+    <line x1="444" y1="150" x2="444" y2="162"/>
+    <line x1="444" y1="218" x2="444" y2="230"/>
+    <line x1="444" y1="270" x2="444" y2="282"/>
+    <line x1="444" y1="348" x2="444" y2="360"/>
+  </g>
+  <g class="warn mono sm">
+    <text x="454" y="116">+800 px</text>
+    <text x="454" y="160">+800 px</text>
+    <text x="454" y="228">+800 px</text>
+    <text x="454" y="280">+800 px</text>
+    <text x="454" y="358">+800 px</text>
+  </g>
+
+  <!-- ========== explanation column ========== -->
+  <g>
+    <rect x="556" y="66" width="296" height="116" rx="8" fill="#ffffff" stroke="hsl(200 25% 85%)"/>
+    <text class="ink lbl" x="572" y="88">Where the padding comes from</text>
+    <text class="muted sm" x="572" y="110">GSAP wraps the pinned element in a</text>
+    <text class="muted sm" x="572" y="127"><tspan class="mono">.pin-spacer</tspan> div and adds the pin</text>
+    <text class="muted sm" x="572" y="144">distance to its padding, so the layout</text>
+    <text class="muted sm" x="572" y="161">still reserves space the element no</text>
+    <text class="muted sm" x="572" y="178">longer occupies.</text>
+
+    <rect x="556" y="198" width="296" height="96" rx="8" fill="hsl(14 72% 97%)" stroke="hsl(14 72% 82%)"/>
+    <text class="ink lbl" x="572" y="220">Why it mattered here</text>
+    <text class="muted sm" x="572" y="242">5 elements × 800 px = 4,000 px</text>
+    <text class="muted sm" x="572" y="260">at 50 px per 3 m, that is</text>
+    <text class="warn mono" font-size="14" x="572" y="282">240 m that isn't there</text>
+
+    <rect x="556" y="310" width="296" height="96" rx="8" fill="hsl(172 45% 96%)" stroke="hsl(172 45% 78%)"/>
+    <text class="ink lbl" x="572" y="332">The fix</text>
+    <text class="muted sm" x="572" y="354"><tspan class="mono" fill="hsl(172 55% 26%)">pinSpacing: false</tspan> stops the padding.</text>
+    <text class="muted sm" x="572" y="376"><tspan class="mono" fill="hsl(172 55% 26%)">pinType: "transform"</tspan> stops the</text>
+    <text class="muted sm" x="572" y="393">jitter that came with it.</text>
+  </g>
+</svg>

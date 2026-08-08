@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 470" width="880" height="470" role="img" aria-label="Two independent loops make ScrollTrigger read a scroll position one frame old; driving Lenis from GSAP's ticker resolves the whole chain inside one frame.">
+  <defs>
+    <style>
+      .panel  { fill: #f6f9fb; stroke: hsl(200 30% 88%); stroke-width: 1; }
+      .frame  { fill: #ffffff; stroke: hsl(200 25% 82%); stroke-width: 1; }
+      .ink    { fill: hsl(220 45% 11%); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .muted  { fill: hsl(199 20% 45%); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .mono   { font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace; }
+      .lbl    { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 13px; }
+      .sm     { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 11.5px; }
+      .hdr    { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 14px; font-weight: 600; }
+      .pill-l { fill: hsl(200 88% 26%); }
+      .pill-g { fill: hsl(172 55% 32%); }
+      .pill-r { fill: hsl(14 72% 48%); }
+      .pill-t { fill: #ffffff; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 12px; }
+      .bad    { stroke: hsl(14 72% 48%); }
+      .good   { stroke: hsl(172 55% 32%); }
+    </style>
+    <marker id="arrBad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="hsl(14 72% 48%)"/>
+    </marker>
+    <marker id="arrGood" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="hsl(172 55% 32%)"/>
+    </marker>
+    <marker id="arrDim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="hsl(199 20% 55%)"/>
+    </marker>
+  </defs>
+
+  <!-- ============ TOP: two independent loops ============ -->
+  <rect class="panel" x="8" y="8" width="864" height="200" rx="10"/>
+  <text class="ink hdr" x="24" y="32">Two loops, order not yours to choose</text>
+  <text class="muted sm" x="24" y="50">GSAP renders before Lenis has moved, so ScrollTrigger reads a stale position</text>
+
+  <g>
+    <!-- frames -->
+    <rect class="frame" x="120" y="64" width="230" height="120" rx="7"/>
+    <rect class="frame" x="370" y="64" width="230" height="120" rx="7"/>
+    <rect class="frame" x="620" y="64" width="230" height="120" rx="7"/>
+    <text class="muted sm mono" x="235" y="82" text-anchor="middle">frame n</text>
+    <text class="muted sm mono" x="485" y="82" text-anchor="middle">frame n+1</text>
+    <text class="muted sm mono" x="735" y="82" text-anchor="middle">frame n+2</text>
+
+    <text class="muted sm" x="24" y="110">GSAP ticker</text>
+    <text class="muted sm" x="24" y="152">Lenis rAF</text>
+
+    <!-- GSAP render pills (top line) -->
+    <rect class="pill-r" x="145" y="94" width="180" height="24" rx="12"/>
+    <text class="pill-t" x="235" y="110" text-anchor="middle">GSAP renders</text>
+    <rect class="pill-r" x="395" y="94" width="180" height="24" rx="12"/>
+    <text class="pill-t" x="485" y="110" text-anchor="middle">GSAP renders</text>
+    <rect class="pill-r" x="645" y="94" width="180" height="24" rx="12"/>
+    <text class="pill-t" x="735" y="110" text-anchor="middle">GSAP renders</text>
+
+    <!-- Lenis pills (second line) -->
+    <rect class="pill-l" x="145" y="136" width="180" height="24" rx="12"/>
+    <text class="pill-t" x="235" y="152" text-anchor="middle">Lenis moves scroll</text>
+    <rect class="pill-l" x="395" y="136" width="180" height="24" rx="12"/>
+    <text class="pill-t" x="485" y="152" text-anchor="middle">Lenis moves scroll</text>
+    <rect class="pill-l" x="645" y="136" width="180" height="24" rx="12"/>
+    <text class="pill-t" x="735" y="152" text-anchor="middle">Lenis moves scroll</text>
+
+    <!-- stale arrows: lenis of frame n feeds gsap of frame n+1 -->
+    <path class="bad" fill="none" stroke-width="1.8" marker-end="url(#arrBad)"
+          d="M325,148 C355,148 355,106 393,106"/>
+    <path class="bad" fill="none" stroke-width="1.8" marker-end="url(#arrBad)"
+          d="M575,148 C605,148 605,106 643,106"/>
+  </g>
+
+  <text class="ink sm" x="440" y="198" text-anchor="middle">
+    every scrubbed animation trails the page by one frame — about 16 ms
+  </text>
+
+  <!-- ============ BOTTOM: one ticker ============ -->
+  <rect class="panel" x="8" y="224" width="864" height="238" rx="10"/>
+  <text class="ink hdr" x="24" y="248">One ticker, one clock</text>
+  <text class="muted sm" x="24" y="266">the whole chain resolves inside a single frame, so GSAP always renders the current position</text>
+
+  <g>
+    <rect class="frame" x="120" y="280" width="230" height="160" rx="7"/>
+    <rect class="frame" x="370" y="280" width="230" height="160" rx="7"/>
+    <rect class="frame" x="620" y="280" width="230" height="160" rx="7"/>
+    <text class="muted sm mono" x="235" y="298" text-anchor="middle">frame n</text>
+    <text class="muted sm mono" x="485" y="298" text-anchor="middle">frame n+1</text>
+    <text class="muted sm mono" x="735" y="298" text-anchor="middle">frame n+2</text>
+    <text class="muted sm" x="24" y="360">GSAP ticker</text>
+    <text class="muted sm" x="24" y="378">drives all of it</text>
+  </g>
+
+  <!-- repeated chain inside each frame -->
+  <g id="chain">
+    <rect class="pill-l" x="145" y="308" width="180" height="22" rx="11"/>
+    <text class="pill-t" x="235" y="323" text-anchor="middle">lenis.raf()</text>
+    <line class="good" x1="235" y1="330" x2="235" y2="342" stroke-width="1.6" marker-end="url(#arrGood)"/>
+    <rect class="pill-g" x="145" y="344" width="180" height="22" rx="11"/>
+    <text class="pill-t" x="235" y="359" text-anchor="middle">scroll event fires</text>
+    <line class="good" x1="235" y1="366" x2="235" y2="378" stroke-width="1.6" marker-end="url(#arrGood)"/>
+    <rect class="pill-g" x="145" y="380" width="180" height="22" rx="11"/>
+    <text class="pill-t" x="235" y="395" text-anchor="middle">ScrollTrigger.update</text>
+    <line class="good" x1="235" y1="402" x2="235" y2="414" stroke-width="1.6" marker-end="url(#arrGood)"/>
+    <rect class="pill-r" x="145" y="416" width="180" height="22" rx="11"/>
+    <text class="pill-t" x="235" y="431" text-anchor="middle">GSAP renders</text>
+  </g>
+  <use href="#chain" x="250"/>
+  <use href="#chain" x="500"/>
+
+  <!-- frame-to-frame continuation -->
+  <line x1="352" y1="360" x2="368" y2="360" stroke="hsl(199 20% 55%)" stroke-width="1.4" marker-end="url(#arrDim)"/>
+  <line x1="602" y1="360" x2="618" y2="360" stroke="hsl(199 20% 55%)" stroke-width="1.4" marker-end="url(#arrDim)"/>
+</svg>

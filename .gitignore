@@ -1,2 +1,17 @@
 .claude/
-blog/
+
+# The blog folder is mostly working files. Publish the post, its stylesheet,
+# the markdown source it is built from, and the assets that have to be live
+# on the web: the .svg and .mp4 the page loads, plus the .png renders the
+# dev.to copy hotlinks. The .gif copies (7.6 MB — uploaded to dev.to by
+# hand), the screen recording, the diagram preview page and the generated
+# blog/export/ stay local.
+blog/*
+!blog/Blog.md
+!blog/index.html
+!blog/blog.css
+!blog/media/
+blog/media/*
+!blog/media/*.svg
+!blog/media/*.mp4
+!blog/media/*.png

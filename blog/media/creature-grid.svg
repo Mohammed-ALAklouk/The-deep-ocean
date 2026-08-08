@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 450" width="880" height="450" role="img" aria-label="An eight column grid with 50 pixel rows worth 3 metres each; a JSON entry's col, colWidth and rowHeight map straight onto grid-column and grid-row, and the row itself is the depth divided by three.">
+  <defs>
+    <style>
+      .panel { fill: #f6f9fb; stroke: hsl(200 30% 88%); stroke-width: 1; }
+      .ink   { fill: hsl(220 45% 11%); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .muted { fill: hsl(199 20% 45%); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .mono  { font-family: ui-monospace, SFMono-Regular, Consolas, "Courier New", monospace; }
+      .sm    { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 11.5px; }
+      .xs    { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 10px; }
+      .hdr   { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 14px; font-weight: 600; }
+      .cell  { fill: none; stroke: hsl(200 30% 84%); stroke-width: 1; }
+    </style>
+    <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="hsl(172 55% 32%)"/>
+    </marker>
+  </defs>
+
+  <rect class="panel" x="8" y="8" width="864" height="434" rx="10"/>
+  <text class="ink hdr" x="24" y="32">One JSON entry, placed</text>
+  <text class="muted sm" x="24" y="50">the grid is neal.fun's: 8 columns, 50 px rows, one row per 3 m of depth</text>
+
+  <!-- ==== grid ==== -->
+  <g transform="translate(96,96)">
+    <rect x="0" y="0" width="400" height="300" fill="hsl(200 88% 26%)" rx="3"/>
+
+    <g class="cell" opacity="0.45">
+      <line x1="50"  y1="0" x2="50"  y2="300"/>
+      <line x1="100" y1="0" x2="100" y2="300"/>
+      <line x1="150" y1="0" x2="150" y2="300"/>
+      <line x1="200" y1="0" x2="200" y2="300"/>
+      <line x1="250" y1="0" x2="250" y2="300"/>
+      <line x1="300" y1="0" x2="300" y2="300"/>
+      <line x1="350" y1="0" x2="350" y2="300"/>
+      <line x1="0" y1="50"  x2="400" y2="50"/>
+      <line x1="0" y1="100" x2="400" y2="100"/>
+      <line x1="0" y1="150" x2="400" y2="150"/>
+      <line x1="0" y1="200" x2="400" y2="200"/>
+      <line x1="0" y1="250" x2="400" y2="250"/>
+    </g>
+
+    <!-- col 5, span 3 · row 1, span 2 -->
+    <rect x="200" y="0" width="150" height="100" fill="hsl(165 92% 62%)" fill-opacity="0.20"
+          stroke="hsl(165 92% 62%)" stroke-width="2" rx="3"/>
+    <text class="mono" font-size="11.5" fill="hsl(168 96% 84%)" x="275" y="44" text-anchor="middle">Manatee</text>
+    <text class="mono" font-size="10" fill="hsl(168 96% 74%)" x="275" y="62" text-anchor="middle">cols 5–7 · rows 1–2</text>
+
+    <text class="muted xs" x="200" y="-32" text-anchor="middle">column</text>
+    <g class="muted xs" text-anchor="middle">
+      <text x="25"  y="-12">1</text><text x="75"  y="-12">2</text>
+      <text x="125" y="-12">3</text><text x="175" y="-12">4</text>
+      <text x="225" y="-12">5</text><text x="275" y="-12">6</text>
+      <text x="325" y="-12">7</text><text x="375" y="-12">8</text>
+    </g>
+
+    <g class="muted xs" text-anchor="end">
+      <text x="-10" y="30">row 1 · 3 m</text>
+      <text x="-10" y="80">row 2 · 6 m</text>
+      <text x="-10" y="130">row 3 · 9 m</text>
+      <text x="-10" y="180">row 4 · 12 m</text>
+      <text x="-10" y="230">row 5 · 15 m</text>
+      <text x="-10" y="280">row 6 · 18 m</text>
+    </g>
+
+    <g stroke="hsl(199 20% 62%)" stroke-width="1.2">
+      <line x1="410" y1="0" x2="410" y2="50"/>
+      <line x1="406" y1="0" x2="414" y2="0"/>
+      <line x1="406" y1="50" x2="414" y2="50"/>
+    </g>
+    <text class="mono xs" fill="hsl(199 20% 45%)" x="418" y="20">50 px</text>
+    <text class="mono xs" fill="hsl(199 20% 45%)" x="418" y="36">= 3 m</text>
+  </g>
+
+  <!-- ==== JSON + mapping ==== -->
+  <g transform="translate(556,96)">
+    <rect x="0" y="0" width="296" height="150" rx="8" fill="hsl(225 40% 10%)"/>
+    <g class="mono" font-size="11.5" fill="hsl(190 28% 88%)">
+      <text x="16" y="26">{</text>
+      <text x="28" y="44"><tspan fill="hsl(199 20% 62%)">"name"</tspan>: <tspan fill="hsl(165 92% 62%)">"Manatee"</tspan>,</text>
+      <text x="28" y="62"><tspan fill="hsl(199 20% 62%)">"slug"</tspan>: <tspan fill="hsl(165 92% 62%)">"manatee"</tspan>,</text>
+      <text x="28" y="80"><tspan fill="hsl(199 20% 62%)">"depth"</tspan>: <tspan fill="hsl(30 90% 70%)">3</tspan>,</text>
+      <text x="28" y="98"><tspan fill="hsl(199 20% 62%)">"col"</tspan>: <tspan fill="hsl(30 90% 70%)">5</tspan>,</text>
+      <text x="28" y="116"><tspan fill="hsl(199 20% 62%)">"colWidth"</tspan>: <tspan fill="hsl(30 90% 70%)">3</tspan>,</text>
+      <text x="28" y="134"><tspan fill="hsl(199 20% 62%)">"rowHeight"</tspan>: <tspan fill="hsl(30 90% 70%)">2</tspan></text>
+    </g>
+
+    <rect x="0" y="166" width="296" height="126" rx="8" fill="#ffffff" stroke="hsl(200 25% 85%)"/>
+    <text class="ink sm" x="16" y="188">becomes</text>
+    <text class="mono" font-size="11.5" fill="hsl(200 88% 26%)" x="16" y="212">gridColumn: "5 / span 3"</text>
+    <text class="mono" font-size="11.5" fill="hsl(200 88% 26%)" x="16" y="232">gridRow:    "1 / span 2"</text>
+    <text class="muted sm" x="16" y="260">the row is the only thing computed:</text>
+    <text class="mono" font-size="11.5" fill="hsl(172 55% 30%)" x="16" y="280">Math.round(depth / 3)</text>
+  </g>
+
+  <path fill="none" stroke="hsl(172 55% 32%)" stroke-width="1.8" marker-end="url(#a1)"
+        d="M548,262 C505,262 498,200 458,178"/>
+
+  <text class="muted sm" x="24" y="424">Copying neal.fun's own row and column numbers is what keeps 128 creatures from overlapping — no solver required.</text>
+</svg>
