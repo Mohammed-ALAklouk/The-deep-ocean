@@ -169,7 +169,6 @@ navDots.forEach((dot) => {
   dot.addEventListener("click", () => {
     const zone = document.getElementById(dot.dataset.target);
     const targetY = zone.getBoundingClientRect().top + window.scrollY;
-    stopAutoScroll(); // if the tour was running, cancel it — user just took control
     lenis.scrollTo(targetY);
   });
 });
@@ -643,87 +642,3 @@ requestAnimationFrame(logFrameRate);
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) resetFpsSample();
 });
-
-// ---- RECORDING TOUR ----
-// Opt-in helper for screen-recording the site: load the page with `?tour` in the
-// URL and it walks itself through a fixed set of waypoints, holding at each one
-// long enough to capture. A normal visit never runs any of this, so it's safe to
-// leave in place.
-// Waypoints are expressed as depths in meters rather than pixel offsets, so they
-// frame the same view at any viewport size — scrollYForDepth below is just
-// updateDepthCounter solved for scroll position instead of depth.
-const TOUR_START_DELAY_MS = 3000;      // dead air before the first move, to start recording
-const TOUR_HERO_HOLD_MS = 8000;        // longer hold on the hero, for leeway
-const TOUR_HOLD_MS = 5000;             // hold at every other waypoint
-const TOUR_TRAVEL_MS = 1200;           // smooth-scroll time between nearby waypoints
-const TOUR_CUT_THRESHOLD_PX = 20000;   // beyond this, cut instead of scrolling — a
-                                       // 150,000px flight is an unwatchable blur, and
-                                       // cutting gives lazy images time to load on arrival
-
-function scrollYForDepth(meters) {
-  const rect = zonesContainer.getBoundingClientRect();
-  const zonesTopDoc = rect.top + window.scrollY;
-  return zonesTopDoc + (meters / totalHeight) * rect.height - 0.7 * window.innerHeight;
-}
-
-function runRecordingTour() {
-  const waypoints = [
-    { label: "hero", y: () => 0, hold: TOUR_HERO_HOLD_MS },
-    {
-      label: "twilight zone card",
-      y: () => document.querySelector("#twilight").getBoundingClientRect().top + window.scrollY + 150,
-      hold: TOUR_HOLD_MS,
-    },
-    { label: "creatures at 337m", y: () => scrollYForDepth(337), hold: TOUR_HOLD_MS },
-    { label: "hadal void at 9534m", y: () => scrollYForDepth(9534), hold: TOUR_HOLD_MS },
-  ];
-
-  let i = 0;
-  (function step() {
-    if (i >= waypoints.length) {
-      console.info("tour: finished");
-      return;
-    }
-    const wp = waypoints[i++];
-    const target = Math.max(0, Math.round(wp.y()));
-    const cut = Math.abs(target - window.scrollY) > TOUR_CUT_THRESHOLD_PX;
-
-    console.info(`tour: ${wp.label} -> ${target}px`);
-    lenis.scrollTo(
-      target,
-      cut
-        ? { immediate: true }
-        : { duration: TOUR_TRAVEL_MS / 1000, easing: (t) => 1 - Math.pow(1 - t, 3) }
-    );
-
-    setTimeout(step, (cut ? 0 : TOUR_TRAVEL_MS) + wp.hold);
-  })();
-}
-
-if (new URLSearchParams(location.search).has("tour")) {
-  // Browsers restore the previous scroll position on reload, which would start the
-  // tour halfway down the page — the opening seconds of the recording would be
-  // wherever you happened to be, not the hero. `scrollRestoration = "manual"` is
-  // the documented opt-out, but it doesn't stick everywhere (it reads back as
-  // "auto" in some embedded browsers), so it can't be the only defence: force the
-  // top on script run, again on load once restoration has had its chance, and once
-  // more immediately before the first waypoint.
-  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
-
-  const forceTop = () => {
-    window.scrollTo(0, 0);
-    lenis.scrollTo(0, { immediate: true });
-  };
-
-  forceTop();
-  window.addEventListener("load", () => {
-    forceTop();
-    setTimeout(() => {
-      forceTop();
-      // Everything that was measured while the page sat at the restored offset is
-      // stale now; recompute before the tour starts moving.
-      ScrollTrigger.refresh();
-      runRecordingTour();
-    }, TOUR_START_DELAY_MS);
-  });
-}
